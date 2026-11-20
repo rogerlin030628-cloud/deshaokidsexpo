@@ -1,0 +1,2508 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>得少展覽報名統計表</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Noto Sans TC & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans TC"', '"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: "Noto Sans TC", "Inter", system-ui, -apple-system, sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+    .sticky-col-1 {
+      position: sticky;
+      left: 0;
+      z-index: 15;
+    }
+    .sticky-col-2 {
+      position: sticky;
+      left: 3.25rem;
+      z-index: 15;
+      box-shadow: 4px 0 6px -2px rgba(15, 23, 42, 0.06);
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    input[type="checkbox"] {
+      width: 1.2rem;
+      height: 1.2rem;
+      cursor: pointer;
+    }
+    input[type="checkbox"]:disabled {
+      cursor: not-allowed;
+      opacity: 0.65;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-indigo-100 selection:text-indigo-900">
+
+  <!-- 管理者模式頂部警示橫幅（預設隱藏，進入管理者模式時顯示） -->
+  <div id="adminBanner" class="hidden bg-amber-500 text-slate-950 px-3 sm:px-4 py-1.5 text-xs font-medium shadow-sm">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-1.5">
+        <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-900 text-amber-400 shrink-0">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+        </span>
+        <span class="font-bold">管理者模式</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <button onclick="openAdminPanelModal()" class="px-2.5 py-1 rounded-md bg-slate-900 text-white hover:bg-slate-800 transition font-semibold text-xs">
+          欄位鎖定設定
+        </button>
+        <button onclick="exitAdminMode()" class="px-2.5 py-1 rounded-md bg-amber-600/30 hover:bg-amber-600/40 text-slate-950 transition font-semibold text-xs">
+          退出
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 頂部精簡標題列 -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2 flex items-center justify-between gap-2">
+      <!-- 標題與連線狀態小標籤 -->
+      <div class="flex items-center gap-2 min-w-0">
+        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-2xs shrink-0">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
+          </svg>
+        </div>
+        <h1 class="text-sm sm:text-lg font-bold text-slate-900 tracking-tight truncate">得少展覽報名統計表</h1>
+        <button type="button" onclick="openSheetSyncModal()" id="syncStatusBadge" title="點擊查看或設定試算表同步" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 shrink-0 hover:opacity-90 transition">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+          <span class="hidden sm:inline">連線中...</span>
+        </button>
+        <button id="quickRefreshBtn" onclick="syncFromGoogleSheetNow()" title="立即與試算表同步最新資料" class="hidden p-1 rounded-full text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition shrink-0">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+        </button>
+      </div>
+
+      <!-- 右側試算表同步與管理者按鈕 -->
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button onclick="openSheetSyncModal()" title="設定 Google 試算表資料庫連線" class="px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1 border border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 shadow-2xs">
+          <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125"/></svg>
+          <span class="hidden sm:inline">試算表同步</span>
+        </button>
+        <button id="adminToggleBtn" onclick="handleAdminButtonClick()" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1 border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 shadow-2xs">
+          <svg id="adminBtnIcon" class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+          </svg>
+          <span id="adminBtnText">管理者</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 分頁導覽架構 -->
+    <nav class="bg-slate-50/90 border-t border-slate-200/80 px-3 sm:px-6 py-1.5 sm:py-2">
+      <div class="max-w-7xl mx-auto space-y-1.5">
+        <div class="flex items-center gap-1.5 sm:gap-2">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 px-1 hidden md:inline">總覽</span>
+          <button onclick="switchTab('guide')" id="nav-tab-guide" class="nav-pill px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1 shrink-0">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg>
+            說明
+          </button>
+          <button onclick="switchTab('summary')" id="nav-tab-summary" class="nav-pill px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1 shrink-0">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
+            總表
+            <span id="navTotalBadge" class="px-1.5 py-0.2 rounded-full text-[11px] bg-indigo-100 text-indigo-700 font-bold tabular-nums">0</span>
+          </button>
+
+          <!-- 手機版快速切換分頁下拉選單 -->
+          <div class="md:hidden flex-1 min-w-0">
+            <select id="mobileQuickTabSelect" onchange="switchTab(this.value)" aria-label="快速選擇分頁"
+              class="w-full px-2.5 py-1 rounded-lg border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs truncate">
+            </select>
+          </div>
+
+          <div class="h-4 w-px bg-slate-300 mx-1 hidden md:block"></div>
+
+          <!-- 電腦版區域檢視切換 -->
+          <div class="hidden md:flex items-center gap-1 bg-slate-200/70 p-0.5 rounded-lg text-xs">
+            <button onclick="setNavRegionFilter('all')" id="regionFilter-all" class="px-2.5 py-1 rounded-md font-medium transition bg-white text-slate-800 shadow-2xs">全部分頁 (15)</button>
+            <button onclick="setNavRegionFilter('taipei')" id="regionFilter-taipei" class="px-2.5 py-1 rounded-md font-medium transition text-slate-600 hover:text-slate-900">台北市 (10)</button>
+            <button onclick="setNavRegionFilter('newtaipei')" id="regionFilter-newtaipei" class="px-2.5 py-1 rounded-md font-medium transition text-slate-600 hover:text-slate-900">新北市 (5)</button>
+          </div>
+        </div>
+
+        <!-- 電腦版第二排：台北市 10 個分頁 -->
+        <div id="taipeiNavGroup" class="hidden md:flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          <span class="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-1 rounded-md shrink-0">台北市 (10)</span>
+          <div id="taipeiTabsList" class="flex items-center gap-1.5"></div>
+        </div>
+
+        <!-- 電腦版第三排：新北市 5 個分頁 -->
+        <div id="newtaipeiNavGroup" class="hidden md:flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          <span class="text-xs font-bold text-teal-700 bg-teal-50 border border-teal-200 px-2 py-1 rounded-md shrink-0">新北市 (5)</span>
+          <div id="newtaipeiTabsList" class="flex items-center gap-1.5"></div>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <!-- 主要內容區 -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+    <div id="loadingSkeleton" class="py-16 text-center space-y-3">
+      <div class="inline-block w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+      <p class="text-sm font-medium text-slate-600">正在載入得少展覽報名資料與即時統計...</p>
+    </div>
+
+    <div id="appContent" class="hidden"></div>
+  </main>
+
+  <!-- 頁尾 -->
+  <footer class="bg-white border-t border-slate-200 py-4 px-4 sm:px-6 text-center text-xs text-slate-400">
+    得少展覽報名統計表 &bull; 支援多人即時同步填報與管理者欄位鎖定控管
+  </footer>
+
+  <!-- ==================== 彈出視窗（Modals） ==================== -->
+
+  <!-- 1. 管理者密碼登入視窗 -->
+  <div id="adminLoginModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-slate-900">進入管理者模式</h3>
+        </div>
+        <button onclick="closeModal('adminLoginModal')" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <p class="text-sm text-slate-600">請輸入管理者密碼以解鎖欄位鎖定設定、統計總表微調與說明頁面編輯權限。</p>
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
+        💡 預設密碼為 <code class="font-mono font-bold bg-white px-1.5 py-0.5 rounded border border-amber-300">admin</code>（登入後可於「欄位鎖定與密碼設定」中修改密碼）。
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1.5">管理者密碼</label>
+        <input type="password" id="adminPasswordInput" placeholder="請輸入密碼..." onkeydown="if(event.key==='Enter') verifyAdminPassword()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+        <p id="adminLoginError" class="hidden text-xs text-rose-600 font-medium mt-1.5">密碼錯誤，請重新輸入。</p>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeModal('adminLoginModal')" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">取消</button>
+        <button onclick="verifyAdminPassword()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-xs">確認登入</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. 管理者欄位鎖定與密碼設定視窗 -->
+  <div id="adminPanelModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-xl border border-slate-200 space-y-5 my-8">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2.5">
+          <span class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/></svg>
+          </span>
+          <div>
+            <h3 class="text-lg font-bold text-slate-900">管理者權限與欄位鎖定控制面板</h3>
+            <p class="text-xs text-slate-500">勾選項目後將即時套用至所有 15 個分頁（一般使用者將無法修改已鎖定項目）</p>
+          </div>
+        </div>
+        <button onclick="closeModal('adminPanelModal')" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="space-y-2.5">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">一、名單與負責人整體鎖定</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label class="flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+            <input type="checkbox" id="lockAddDeleteChk" class="mt-0.5 accent-indigo-600 rounded" />
+            <div>
+              <div class="text-sm font-semibold text-slate-800">禁止新增 / 刪除兒童</div>
+              <div class="text-xs text-slate-500 mt-0.5">隱藏或停用一般使用者的「新增」與「刪除」按鈕</div>
+            </div>
+          </label>
+          <label class="flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+            <input type="checkbox" id="lockCoordinatorsChk" class="mt-0.5 accent-indigo-600 rounded" />
+            <div>
+              <div class="text-sm font-semibold text-slate-800">鎖定負責人資料</div>
+              <div class="text-xs text-slate-500 mt-0.5">鎖定各分頁頂部的會所、名字、性別與電話</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="space-y-2.5">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">二、逐一勾選鎖定報名表個別欄位</h4>
+          <div class="flex flex-wrap gap-1.5">
+            <button type="button" onclick="applyLockPreset('none')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition">全部解鎖</button>
+            <button type="button" onclick="applyLockPreset('profileOnly')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition">鎖定基本資料(開放勾選出席/文件)</button>
+            <button type="button" onclick="applyLockPreset('all')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 hover:bg-amber-100 transition">全部欄位鎖定</button>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+          <label class="flex items-center gap-2.5 p-2 rounded-lg bg-white border border-slate-200/80 cursor-pointer hover:border-indigo-300">
+            <input type="checkbox" id="lockField_hall" class="accent-indigo-600 rounded" />
+            <span class="text-sm font-medium text-slate-800">會所</span>
+          </label>
+          <label class="flex items-center gap-2.5 p-2 rounded-lg bg-white border border-slate-200/80 cursor-pointer hover:border-indigo-300">
+            <input type="checkbox" id="lockField_name" class="accent-indigo-600 rounded" />
+            <span class="text-sm font-medium text-slate-800">名字</span>
+          </label>
+          <label class="flex items-center gap-2.5 p-2 rounded-lg bg-white border border-slate-200/80 cursor-pointer hover:border-indigo-300">
+            <input type="checkbox" id="lockField_gender" class="accent-indigo-600 rounded" />
+            <span class="text-sm font-medium text-slate-800">性別</span>
+          </label>
+          <label class="flex items-center gap-2.5 p-2 rounded-lg bg-white border border-slate-200/80 cursor-pointer hover:border-indigo-300">
+            <input type="checkbox" id="lockField_grade" class="accent-indigo-600 rounded" />
+            <span class="text-sm font-medium text-slate-800">年級</span>
+          </label>
+          <label class="flex items-center gap-2.5 p-2 rounded-lg bg-white border border-slate-200/80 cursor-pointer hover:border-indigo-300">
+            <input type="checkbox" id="lockField_att_0102" class="accent-indigo-600 rounded" />
+            <span class="text-sm font-medium text-slate-800">1/2出席</span>
+          </label>
+          <label class="flex items-center gap-2.5 p-2 rounded-lg bg-white border border-slate-200/80 cursor-pointer hover:border-indigo-300">
+            <input type="checkbox" id="lockField_att_0213" class="accent-indigo-600 rounded" />
+            <span class="text-sm font-medium text-slate-800">2/13出席</span>
+          </label>
+          <label class="flex items-center gap-2.5 p-2 rounded-lg bg-white border border-slate-200/80 cursor-pointer hover:border-indigo-300">
+            <input type="checkbox" id="lockField_att_0219" class="accent-indigo-600 rounded" />
+            <span class="text-sm font-medium text-slate-800">2/19出席</span>
+          </label>
+          <label class="flex items-center gap-2.5 p-2 rounded-lg bg-white border border-slate-200/80 cursor-pointer hover:border-indigo-300">
+            <input type="checkbox" id="lockField_volunteerDoc" class="accent-indigo-600 rounded" />
+            <span class="text-sm font-medium text-slate-800">填寫完成志工文件</span>
+          </label>
+          <label class="flex items-center gap-2.5 p-2 rounded-lg bg-white border border-slate-200/80 cursor-pointer hover:border-indigo-300">
+            <input type="checkbox" id="lockField_note" class="accent-indigo-600 rounded" />
+            <span class="text-sm font-medium text-slate-800">備註</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="space-y-2 pt-2 border-t border-slate-100">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">三、變更管理者密碼（選填）</h4>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <input type="text" id="newAdminPasswordInput" placeholder="若需變更密碼請在此輸入新密碼（留空則維持原密碼）" class="flex-1 px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+        <button onclick="closeModal('adminPanelModal')" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">取消</button>
+        <button onclick="saveAdminLockSettings()" class="px-5 py-2 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-sm">儲存並套用設定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 自訂刪除確認視窗 -->
+  <div id="confirmDeleteModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200 space-y-4">
+      <div class="flex items-center gap-3 text-rose-600">
+        <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-slate-900">確認刪除此筆報名資料？</h3>
+          <p id="confirmDeleteText" class="text-xs text-slate-500 mt-0.5">刪除後將無法復原，並會即時更新統計總表。</p>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeModal('confirmDeleteModal')" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">取消</button>
+        <button id="confirmDeleteBtn" class="px-4 py-2 rounded-xl text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 transition">確認刪除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. 管理者重新命名分頁視窗 -->
+  <div id="renameTabModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4">
+      <h3 class="text-lg font-bold text-slate-900">修改分頁名稱</h3>
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1.5">分頁顯示名稱</label>
+        <input type="text" id="renameTabInput" onkeydown="if(event.key==='Enter') confirmRenameTab()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeModal('renameTabModal')" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition">取消</button>
+        <button onclick="confirmRenameTab()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition">儲存名稱</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Google 試算表資料庫連線設定視窗 -->
+  <div id="sheetSyncModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-lg font-bold text-slate-900">連接 Google 試算表資料庫</h3>
+        <button onclick="closeModal('sheetSyncModal')" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Apps Script 部署版本提醒横幅 -->
+      <div id="gasVersionWarningBanner" class="hidden bg-amber-50 border border-amber-300 rounded-xl p-3 text-xs text-amber-950 space-y-1">
+        <div class="font-bold text-amber-800">⚠️ 偵測到 Google Apps Script 尚未發布為「建立新版本」</div>
+        <div>請至 Apps Script 編輯器點擊右上角 <strong>「部署 → 管理部署作業 → 點筆圖示（編輯）→ 版本選『建立新版本』→ 部署」</strong>，否則線上網址仍會執行舊版程式。</div>
+      </div>
+
+      <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+        將 Google Apps Script 部署為「網頁應用程式」後，把產生的 <code class="bg-slate-100 px-1 rounded">https://script.google.com/macros/s/.../exec</code> 網址貼在下方，即可讓所有裝置即時同步讀寫您的 Google 試算表！
+      </p>
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1.5">Google Apps Script 網頁應用程式網址</label>
+        <input type="url" id="googleScriptUrlInput" placeholder="https://script.google.com/macros/s/xxxxxx/exec" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+      </div>
+
+      <!-- 手動雙向同步工具列 -->
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
+        <div class="text-xs font-bold text-slate-700">手動同步工具</div>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" onclick="syncFromGoogleSheetNow()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 transition">
+            從試算表重新讀取
+          </button>
+          <button type="button" onclick="pushAllLocalDataToGoogleSheet(false)" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-2xs">
+            將目前網頁資料強制寫入試算表
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-900 space-y-1">
+        <div class="font-bold">💡 讓全體服事者免貼網址、打開網頁自動連線的小技巧：</div>
+        <div>您也可以將網址直接填入 <code class="font-mono bg-white px-1 rounded">index.html</code> 程式碼中的 <code class="font-mono bg-white px-1 rounded">DEFAULT_GOOGLE_SCRIPT_URL</code> 變數，上傳到 GitHub 後所有人打開網址就會自動連上您的試算表！</div>
+      </div>
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button type="button" onclick="closeModal('sheetSyncModal')" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-100 transition">取消</button>
+        <button type="button" onclick="saveGoogleScriptUrl()" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-xs">儲存並連線同步</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 浮動提示訊息（Toast） -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ==================== 應用程式邏輯與 Google 試算表即時同步 ==================== -->
+  <script>
+    // ★ 若您已部署 Google Apps Script 網頁應用程式，可將網址貼在下方引號內，上傳 GitHub 後所有人打開即自動連線：
+    const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwips8o9Nb5KsWgabkmBNk2yesy0y4qNCOM4k9cBxtBP9ssskse7IYhYE3LgK4KFYFz/exec";
+    const SCRIPT_URL_STORAGE_KEY = "deshao_google_script_url";
+    const REQUIRED_API_VERSION = 5;
+
+    // 環境全域設定讀取（固定設為 null，避免無 Firebase 設定之靜態託管環境受網路阻擋）
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'deshao-exhibition-default';
+    const firebaseConfig = null;
+
+    // 預設說明頁面內容
+    const DEFAULT_GUIDE = {
+      title: "得少展覽報名與各區統計填報說明",
+      subtitle: "歡迎各會所與服事者使用本系統進行「得少展覽」名單登錄、出席確認與志工文件追蹤。",
+      importantDates: "• 1/2（第一次集調與預備）：確認各區報名人數與初步編組。\n• 2/13（展覽前總彩排與練習）：核對出席名單與服事細節。\n• 2/19（得少展覽正式日期）：全體參展兒童與服事者準時報到。",
+      volunteerNotice: "• 所有參與服事或需保險／報備之相關人員，請務必於規定日期前完成「志工文件」填寫與繳交。\n• 確認紙本或線上文件無誤後，請在各分頁名單的「填寫完成志工文件」欄位打勾。",
+      reportingRules: "• 台北市共設有 10 個分頁：城中區、中山大同區、信基區、港湖區、士林區、北投區、大安區、文一區、文二區、文三區。\n• 新北市共設有 5 個分頁：海山區、雙和區、新汐區、重新一區、重新二區。\n• 每個分頁上方請務必填寫主要負責人（弟兄／姊妹不拘）之會所、名字、性別與聯絡電話。\n• 「統計總表」會即時自動加總 15 個分頁的報名人數、各場次出席與志工文件完成人數。",
+      extraAnnouncement: "⚠️ 填報期限前請各區負責人務必再次核對年級（4年級、5年級、6年級）與出席勾選狀態；截止後管理者將鎖定基本資料欄位進行彙整。"
+    };
+
+    // 預設欄位鎖定結構
+    const DEFAULT_LOCKS = {
+      lockAddDelete: false,
+      lockCoordinators: false,
+      fields: {
+        hall: false,
+        name: false,
+        gender: false,
+        grade: false,
+        att_0102: false,
+        att_0213: false,
+        att_0219: false,
+        volunteerDoc: false,
+        note: false
+      }
+    };
+
+    // 台北市 10 區與新北市 5 區官方名稱清單
+    const TAIPEI_DISTRICTS = [
+      '城中區', '中山大同區', '信基區', '港湖區', '士林區',
+      '北投區', '大安區', '文一區', '文二區', '文三區'
+    ];
+    const NEWTAIPEI_DISTRICTS = [
+      '海山區', '雙和區', '新汐區', '重新一區', '重新二區'
+    ];
+
+    const LEGACY_TAB_NAME_MAP = {
+      '台北市01': '城中區',
+      '台北市02': '中山大同區',
+      '台北市03': '信基區',
+      '台北市04': '港湖區',
+      '台北市05': '士林區',
+      '台北市06': '北投區',
+      '台北市07': '大安區',
+      '台北市08': '文一區',
+      '台北市09': '文二區',
+      '台北市10': '文三區',
+      '新北市01': '海山區',
+      '新北市02': '雙和區',
+      '新北市03': '新汐區',
+      '新北市04': '重新一區',
+      '新北市05': '重新二區'
+    };
+
+    function normalizeTabName(name) {
+      return LEGACY_TAB_NAME_MAP[name] || name;
+    }
+
+    function buildDefaultTabsMap() {
+      const map = {};
+      TAIPEI_DISTRICTS.forEach((districtName, idx) => {
+        const i = idx + 1;
+        const num = String(i).padStart(2, '0');
+        const id = `tp-${num}`;
+        map[id] = {
+          id,
+          region: 'taipei',
+          order: i,
+          name: districtName,
+          coordinators: [
+            { hall: '', name: '', gender: '', phone: '' },
+            { hall: '', name: '', gender: '', phone: '' },
+            { hall: '', name: '', gender: '', phone: '' }
+          ],
+          summaryNote: '',
+          manualOverride: {
+            enabled: false,
+            total: null,
+            att_0102: null,
+            att_0213: null,
+            att_0219: null,
+            volunteerDoc: null
+          }
+        };
+      });
+      NEWTAIPEI_DISTRICTS.forEach((districtName, idx) => {
+        const i = idx + 1;
+        const num = String(i).padStart(2, '0');
+        const id = `nt-${num}`;
+        map[id] = {
+          id,
+          region: 'newtaipei',
+          order: 10 + i,
+          name: districtName,
+          coordinators: [
+            { hall: '', name: '', gender: '', phone: '' },
+            { hall: '', name: '', gender: '', phone: '' },
+            { hall: '', name: '', gender: '', phone: '' }
+          ],
+          summaryNote: '',
+          manualOverride: {
+            enabled: false,
+            total: null,
+            att_0102: null,
+            att_0213: null,
+            att_0219: null,
+            volunteerDoc: null
+          }
+        };
+      });
+      return map;
+    }
+
+    // 應用程式全域狀態
+    const state = {
+      activeTab: 'summary',
+      navRegionFilter: 'all',
+      isAdmin: false,
+      isEditingGuide: false,
+      summaryManualMode: false,
+      summaryZoom: 100,
+      sheetSyncMode: false,
+      apiVersionMismatch: false,
+      googleScriptUrl: localStorage.getItem(SCRIPT_URL_STORAGE_KEY) || DEFAULT_GOOGLE_SCRIPT_URL,
+      cloudMode: false,
+      db: null,
+      user: null,
+      guide: { ...DEFAULT_GUIDE },
+      settings: {
+        adminPassword: 'admin',
+        locks: JSON.parse(JSON.stringify(DEFAULT_LOCKS))
+      },
+      tabs: buildDefaultTabsMap(),
+      registrations: [],
+      filters: {
+        search: '',
+        grade: 'all',
+        docStatus: 'all'
+      },
+      pendingDeleteRegId: null,
+      renamingTabId: null,
+      lastAddRowTs: 0
+    };
+
+    const debounceTimers = {};
+    const divisionSyncTimers = {};
+    const divisionSyncInFlight = {};
+    const dirtyDivisions = new Set();
+    const divisionSyncFailed = {};
+    const LOCAL_STORAGE_KEY = `deshao_exhibition_data_${appId}`;
+    let lastLocalEditAt = 0;
+    let pendingWriteCount = 0;
+
+    function isRegEmpty(r) {
+      if (!r) return true;
+      const hall = String(r.hall || '').trim();
+      const name = String(r.name || '').trim();
+      const gender = String(r.gender || '').trim();
+      const grade = String(r.grade || '').trim();
+      const note = String(r.note || '').trim();
+      return !(hall || name || gender || grade || r.att_0102 || r.att_0213 || r.att_0219 || r.volunteerDoc || note);
+    }
+
+    // ==================== 通用輔助函式 ====================
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function formatMultilineHtml(str) {
+      return escapeHtml(str || '').replace(/\n/g, '<br>');
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      if (!container) return;
+      const el = document.createElement('div');
+      const colorCls = type === 'error'
+        ? 'bg-rose-600 text-white'
+        : type === 'warning'
+          ? 'bg-amber-500 text-slate-950'
+          : 'bg-slate-900 text-white';
+      el.className = `${colorCls} px-4 py-2.5 rounded-xl shadow-lg text-xs sm:text-sm font-medium flex items-center gap-2 pointer-events-auto transition-all duration-200 transform translate-y-2 opacity-0`;
+      el.textContent = message;
+      container.appendChild(el);
+
+      requestAnimationFrame(() => {
+        el.classList.remove('translate-y-2', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        el.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => el.remove(), 220);
+      }, 2800);
+    }
+
+    function setSyncStatus(status) {
+      const badge = document.getElementById('syncStatusBadge');
+      const refreshBtn = document.getElementById('quickRefreshBtn');
+      const gasWarnBanner = document.getElementById('gasVersionWarningBanner');
+      if (refreshBtn) {
+        refreshBtn.classList.toggle('hidden', !state.sheetSyncMode);
+      }
+      if (gasWarnBanner) {
+        gasWarnBanner.classList.toggle('hidden', !state.apiVersionMismatch);
+      }
+      if (!badge) return;
+
+      if (state.apiVersionMismatch && status !== 'saving') {
+        badge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-900 border border-amber-300 shrink-0';
+        badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-600 animate-ping"></span><span>需更新GAS版本</span>';
+        return;
+      }
+
+      if (status === 'saving') {
+        badge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200 shrink-0';
+        badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span><span>儲存中</span>';
+      } else if (status === 'synced') {
+        badge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0';
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span><span class="hidden sm:inline">${state.sheetSyncMode ? '試算表已同步' : '雲端即時同步'}</span><span class="sm:hidden">已同步</span>`;
+      } else if (status === 'error') {
+        badge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-300 shrink-0';
+        badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span><span>同步異常(重試中)</span>';
+      } else {
+        badge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-200 shrink-0';
+        badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span><span class="hidden sm:inline">本機即時儲存</span><span class="sm:hidden">本機</span>';
+      }
+    }
+
+    function saveLocalBackup() {
+      try {
+        const payload = {
+          guide: state.guide,
+          settings: state.settings,
+          tabs: state.tabs,
+          registrations: state.registrations
+        };
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(payload));
+        if (!state.cloudMode && !state.sheetSyncMode) setSyncStatus('local');
+      } catch (e) {
+        console.warn("LocalStorage save error:", e);
+      }
+    }
+
+    function loadLocalBackup() {
+      try {
+        const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.guide) state.guide = { ...DEFAULT_GUIDE, ...parsed.guide };
+          if (parsed.settings) {
+            state.settings = {
+              adminPassword: parsed.settings.adminPassword || 'admin',
+              locks: {
+                ...DEFAULT_LOCKS,
+                ...(parsed.settings.locks || {}),
+                fields: {
+                  ...DEFAULT_LOCKS.fields,
+                  ...((parsed.settings.locks && parsed.settings.locks.fields) || {})
+                }
+              }
+            };
+          }
+          if (parsed.tabs) {
+            const defaultTabs = buildDefaultTabsMap();
+            Object.keys(defaultTabs).forEach(k => {
+              if (parsed.tabs[k]) {
+                state.tabs[k] = {
+                  ...defaultTabs[k],
+                  ...parsed.tabs[k],
+                  name: normalizeTabName(parsed.tabs[k].name || defaultTabs[k].name)
+                };
+              }
+            });
+          }
+          if (Array.isArray(parsed.registrations)) {
+            state.registrations = parsed.registrations.filter(r => !String(r.id || '').startsWith('seed_'));
+          }
+          return true;
+        }
+      } catch (e) {
+        console.warn("LocalStorage load error:", e);
+      }
+      return false;
+    }
+
+    function isFieldLocked(fieldKey) {
+      if (state.isAdmin) return false;
+      return Boolean(state.settings.locks?.fields?.[fieldKey]);
+    }
+
+    function isAddDeleteLocked() {
+      if (state.isAdmin) return false;
+      return Boolean(state.settings.locks?.lockAddDelete);
+    }
+
+    function isCoordinatorsLocked() {
+      if (state.isAdmin) return false;
+      return Boolean(state.settings.locks?.lockCoordinators);
+    }
+
+    function getSortedTabs() {
+      return Object.values(state.tabs).sort((a, b) => a.order - b.order);
+    }
+
+    function computeTabStats(tabId) {
+      const tab = state.tabs[tabId];
+      const list = state.registrations.filter(r => r.tabId === tabId && !isRegEmpty(r));
+      const calc = {
+        total: list.length,
+        att_0102: list.filter(r => r.att_0102).length,
+        att_0213: list.filter(r => r.att_0213).length,
+        att_0219: list.filter(r => r.att_0219).length,
+        volunteerDoc: list.filter(r => r.volunteerDoc).length,
+        boys: list.filter(r => r.gender === '男' || r.gender === '弟兄').length,
+        girls: list.filter(r => r.gender === '女' || r.gender === '姊妹').length,
+        g4: list.filter(r => r.grade === '4年級').length,
+        g5: list.filter(r => r.grade === '5年級').length,
+        g6: list.filter(r => r.grade === '6年級').length
+      };
+      const ov = tab?.manualOverride;
+      if (ov && ov.enabled) {
+        return {
+          ...calc,
+          total: ov.total !== null && ov.total !== '' ? Number(ov.total) : calc.total,
+          att_0102: ov.att_0102 !== null && ov.att_0102 !== '' ? Number(ov.att_0102) : calc.att_0102,
+          att_0213: ov.att_0213 !== null && ov.att_0213 !== '' ? Number(ov.att_0213) : calc.att_0213,
+          att_0219: ov.att_0219 !== null && ov.att_0219 !== '' ? Number(ov.att_0219) : calc.att_0219,
+          volunteerDoc: ov.volunteerDoc !== null && ov.volunteerDoc !== '' ? Number(ov.volunteerDoc) : calc.volunteerDoc,
+          isOverridden: true
+        };
+      }
+      return { ...calc, isOverridden: false };
+    }
+
+    function computeRegionAndGrandStats() {
+      const sorted = getSortedTabs();
+      const tpTabs = sorted.filter(t => t.region === 'taipei');
+      const ntTabs = sorted.filter(t => t.region === 'newtaipei');
+
+      const sumGroup = (tabs) => tabs.reduce((acc, t) => {
+        const s = computeTabStats(t.id);
+        acc.total += s.total;
+        acc.att_0102 += s.att_0102;
+        acc.att_0213 += s.att_0213;
+        acc.att_0219 += s.att_0219;
+        acc.volunteerDoc += s.volunteerDoc;
+        return acc;
+      }, { total: 0, att_0102: 0, att_0213: 0, att_0219: 0, volunteerDoc: 0 });
+
+      const taipei = sumGroup(tpTabs);
+      const newtaipei = sumGroup(ntTabs);
+      const grand = {
+        total: taipei.total + newtaipei.total,
+        att_0102: taipei.att_0102 + newtaipei.att_0102,
+        att_0213: taipei.att_0213 + newtaipei.att_0213,
+        att_0219: taipei.att_0219 + newtaipei.att_0219,
+        volunteerDoc: taipei.volunteerDoc + newtaipei.volunteerDoc
+      };
+      return { taipei, newtaipei, grand };
+    }
+
+    // ==================== Google 試算表雙向同步核心 ====================
+    function applyRemoteSheetPayload(data, preserveLocalIfRemoteEmpty = false) {
+      if (!data) return false;
+      if (data.guide) {
+        state.guide = { ...DEFAULT_GUIDE, ...data.guide };
+      }
+      if (data.settings) {
+        state.settings = {
+          adminPassword: data.settings.adminPassword || state.settings.adminPassword || 'admin',
+          locks: {
+            ...DEFAULT_LOCKS,
+            ...(data.settings.locks || {}),
+            fields: {
+              ...DEFAULT_LOCKS.fields,
+              ...((data.settings.locks && data.settings.locks.fields) || {})
+            }
+          }
+        };
+      }
+      if (data.tabs) {
+        const defaultTabs = buildDefaultTabsMap();
+        Object.keys(defaultTabs).forEach(k => {
+          if (data.tabs[k]) {
+            const remoteTab = data.tabs[k];
+            const localTab = state.tabs[k] || defaultTabs[k];
+            const remoteHasCoords = Array.isArray(remoteTab.coordinators) && remoteTab.coordinators.some(c => c.hall || c.name || c.gender || c.phone);
+            const localHasCoords = Array.isArray(localTab.coordinators) && localTab.coordinators.some(c => c.hall || c.name || c.gender || c.phone);
+            state.tabs[k] = {
+              ...defaultTabs[k],
+              ...remoteTab,
+              name: normalizeTabName(remoteTab.name || defaultTabs[k].name),
+              coordinators: (!remoteHasCoords && localHasCoords && preserveLocalIfRemoteEmpty)
+                ? localTab.coordinators
+                : (remoteTab.coordinators || defaultTabs[k].coordinators)
+            };
+          }
+        });
+      }
+
+      let shouldPushLocalToSheet = false;
+      if (Array.isArray(data.registrations)) {
+        const now = Date.now();
+        const normalizedRemote = data.registrations.map(r => ({
+          ...r,
+          gender: r.gender === '弟兄' ? '男' : (r.gender === '姊妹' ? '女' : (r.gender || ''))
+        }));
+        const localFilled = state.registrations.filter(r => !isRegEmpty(r));
+
+        if (preserveLocalIfRemoteEmpty && normalizedRemote.length === 0 && localFilled.length > 0) {
+          shouldPushLocalToSheet = true;
+          ensureDefaultBlankRows(5);
+        } else {
+          const pendingLocalBlankRows = state.registrations.filter(r =>
+            String(r.id).startsWith('reg_') &&
+            isRegEmpty(r) &&
+            (now - (r.createdAt || 0) < 120000)
+          );
+          state.registrations = [...normalizedRemote, ...pendingLocalBlankRows];
+          ensureDefaultBlankRows(5);
+        }
+      }
+      saveLocalBackup();
+      return shouldPushLocalToSheet;
+    }
+
+    async function fetchFromGoogleSheet(silent = false, preserveLocalIfRemoteEmpty = false) {
+      const url = (state.googleScriptUrl || '').trim();
+      if (!url) return false;
+      const startedAt = Date.now();
+      try {
+        const sep = url.includes('?') ? '&' : '?';
+        const startedAt = Date.now();
+        const res = await fetch(`${url}${sep}t=${Date.now()}`, { method: 'GET' });
+        const json = await res.json();
+        if (json && json.ok && json.data) {
+          if (silent && (lastLocalEditAt > startedAt || pendingWriteCount > 0 || dirtyDivisions.size > 0)) return false;
+          if (silent && (lastLocalEditAt > startedAt || pendingWriteCount > 0 || dirtyDivisions.size > 0)) {
+            return false;
+          }
+          const ver = Number(json.apiVersion || 0);
+          const wasMismatch = state.apiVersionMismatch;
+          state.apiVersionMismatch = ver < REQUIRED_API_VERSION;
+
+          const needPushLocal = applyRemoteSheetPayload(json.data, preserveLocalIfRemoteEmpty);
+          if (needPushLocal) {
+            await pushAllLocalDataToGoogleSheet(true);
+          }
+
+          if (pendingWriteCount === 0 && dirtyDivisions.size === 0) {
+            setSyncStatus('synced');
+          }
+          if (state.apiVersionMismatch && (!silent || !wasMismatch)) {
+            showToast('提醒：Google Apps Script 需點「部署 → 管理部署作業 → 建立新版本」才會生效', 'warning');
+          }
+          return true;
+        }
+        throw new Error((json && json.error) || 'Invalid response');
+      } catch (err) {
+        console.warn('Google Sheet fetch warning:', err);
+        if (!silent) {
+          setSyncStatus('error');
+          showToast('讀取試算表失敗，請檢查部署權限是否為「所有人」', 'error');
+        }
+        return false;
+      }
+    }
+
+    async function postToGoogleSheet(payload) {
+      const url = (state.googleScriptUrl || '').trim();
+      if (!url) return null;
+      pendingWriteCount++;
+      setSyncStatus('saving');
+      let succeeded = false;
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        let json = null;
+        try {
+          json = await res.json();
+        } catch (parseErr) {
+          json = { ok: true, apiVersion: REQUIRED_API_VERSION };
+        }
+        if (json && json.ok === false) {
+          throw new Error(json.error || 'Write failed');
+        }
+        if (json && typeof json.apiVersion !== 'undefined') {
+          state.apiVersionMismatch = Number(json.apiVersion) < REQUIRED_API_VERSION;
+        }
+        succeeded = true;
+        return json || { ok: true };
+      } catch (err) {
+        console.warn('Google Sheet write error:', err);
+        return null;
+      } finally {
+        pendingWriteCount = Math.max(0, pendingWriteCount - 1);
+        if (pendingWriteCount === 0) {
+          if (succeeded && dirtyDivisions.size === 0) {
+            setSyncStatus('synced');
+          } else if (!succeeded) {
+            setSyncStatus('error');
+          }
+        }
+      }
+    }
+
+    function queueDivisionSync(tabId, immediate = false) {
+      if (!state.sheetSyncMode || !tabId) return;
+      dirtyDivisions.add(tabId);
+      lastLocalEditAt = Date.now();
+      if (divisionSyncTimers[tabId]) {
+        clearTimeout(divisionSyncTimers[tabId]);
+        delete divisionSyncTimers[tabId];
+      }
+      const trigger = () => {
+        delete divisionSyncTimers[tabId];
+        flushDivisionSync(tabId);
+      };
+      if (immediate) {
+        trigger();
+      } else {
+        divisionSyncTimers[tabId] = setTimeout(trigger, 350);
+      }
+    }
+
+    async function flushDivisionSync(tabId) {
+      if (!state.sheetSyncMode || !tabId) return;
+      if (divisionSyncInFlight[tabId]) {
+        dirtyDivisions.add(tabId);
+        return;
+      }
+      dirtyDivisions.delete(tabId);
+      divisionSyncInFlight[tabId] = true;
+      divisionSyncFailed[tabId] = false;
+      lastLocalEditAt = Date.now();
+      let failed = false;
+      try {
+        const tabRegs = state.registrations.filter(r => r.tabId === tabId && !isRegEmpty(r));
+        const res = await postToGoogleSheet({
+          action: 'syncDivisionRegistrations',
+          tabId,
+          registrations: tabRegs
+        });
+        if (!res) {
+          divisionSyncFailed[tabId] = true;
+          dirtyDivisions.add(tabId);
+          failed = true;
+        } else {
+          lastLocalEditAt = Date.now();
+        }
+      } finally {
+        divisionSyncInFlight[tabId] = false;
+        if (dirtyDivisions.has(tabId) && !failed) {
+          if (!divisionSyncFailed[tabId]) setTimeout(() => flushDivisionSync(tabId), 80);
+        }
+      }
+    }
+
+    window.pushAllLocalDataToGoogleSheet = async function(silent = false) {
+      if (!state.googleScriptUrl) {
+        openSheetSyncModal();
+        return;
+      }
+      state.sheetSyncMode = true;
+      lastLocalEditAt = Date.now();
+      const filled = state.registrations.filter(r => !isRegEmpty(r));
+      const res = await postToGoogleSheet({
+        action: 'pushFullState',
+        tabs: state.tabs,
+        registrations: filled
+      });
+      if (res) {
+        dirtyDivisions.clear();
+        lastLocalEditAt = Date.now();
+        setSyncStatus('synced');
+        if (!silent) {
+          closeModal('sheetSyncModal');
+          showToast('已成功將全部網頁資料寫入 Google 試算表！');
+        }
+      } else if (!silent) {
+        showToast('寫入失敗，請確認 Apps Script 部署權限設為「所有人」且已建立新版本', 'error');
+      }
+    };
+
+    function startGoogleSheetPolling() {
+      // 每 5 秒自動重試尚未寫入成功的分頁
+      setInterval(() => {
+        if (!state.sheetSyncMode) return;
+        if (dirtyDivisions.size > 0) {
+          Array.from(dirtyDivisions).forEach(tabId => {
+            if (!divisionSyncInFlight[tabId] && !divisionSyncTimers[tabId]) {
+              flushDivisionSync(tabId);
+            }
+          });
+        }
+      }, 5000);
+
+      // 每 12 秒從試算表靜默拉取最新資料
+      setInterval(async () => {
+        if (!state.sheetSyncMode) return;
+        if (Object.keys(debounceTimers).length > 0) return;
+        if (pendingWriteCount > 0 || dirtyDivisions.size > 0) return;
+        if (Object.values(divisionSyncInFlight).some(Boolean)) return;
+        if (Date.now() - lastLocalEditAt < 5000) return;
+        if (Object.keys(debounceTimers).length > 0) return;
+        if (document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+        const ok = await fetchFromGoogleSheet(true, false);
+        if (ok) {
+          renderNavigation();
+          renderCurrentView();
+        }
+      }, 12000);
+    }
+
+    window.openSheetSyncModal = function() {
+      const inp = document.getElementById('googleScriptUrlInput');
+      if (inp) inp.value = state.googleScriptUrl || '';
+      const gasWarnBanner = document.getElementById('gasVersionWarningBanner');
+      if (gasWarnBanner) {
+        gasWarnBanner.classList.toggle('hidden', !state.apiVersionMismatch);
+      }
+      document.getElementById('sheetSyncModal').classList.remove('hidden');
+    };
+
+    window.saveGoogleScriptUrl = async function() {
+      const inp = document.getElementById('googleScriptUrlInput');
+      const url = (inp ? inp.value : '').trim();
+      if (!url) {
+        state.googleScriptUrl = '';
+        state.sheetSyncMode = false;
+        state.apiVersionMismatch = false;
+        localStorage.removeItem(SCRIPT_URL_STORAGE_KEY);
+        setSyncStatus('local');
+        closeModal('sheetSyncModal');
+        showToast('已切換為本機儲存模式');
+        return;
+      }
+      if (!url.startsWith('https://script.google.com/')) {
+        showToast('請輸入正確的 Google Apps Script 網址（https://script.google.com/.../exec）', 'warning');
+        return;
+      }
+      state.googleScriptUrl = url;
+      state.sheetSyncMode = true;
+      localStorage.setItem(SCRIPT_URL_STORAGE_KEY, url);
+      closeModal('sheetSyncModal');
+      showToast('正在連線並同步 Google 試算表...');
+      const ok = await fetchFromGoogleSheet(false, true);
+      if (ok) {
+        renderNavigation();
+        renderCurrentView();
+        if (!state.apiVersionMismatch) {
+          showToast('已成功連接 Google 試算表資料庫！');
+        }
+      }
+    };
+
+    window.syncFromGoogleSheetNow = async function() {
+      if (!state.googleScriptUrl) {
+        openSheetSyncModal();
+        return;
+      }
+      if (dirtyDivisions.size > 0 || pendingWriteCount > 0) {
+        showToast('尚有未送出資料，正在先寫入試算表...', 'warning');
+        await pushAllLocalDataToGoogleSheet(true);
+      }
+      showToast('正在從 Google 試算表同步最新資料...');
+      const ok = await fetchFromGoogleSheet(false, false);
+      if (ok) {
+        renderNavigation();
+        renderCurrentView();
+        showToast('已同步試算表最新資料');
+      }
+    };
+
+    // ==================== 資料儲存與初始化 ====================
+    function ensureDefaultBlankRows(minRowsPerTab = 5) {
+      const sortedTabs = getSortedTabs();
+      let changed = false;
+      const baseTime = Date.now();
+      sortedTabs.forEach((tab, tIdx) => {
+        const tabRegs = state.registrations.filter(r => r.tabId === tab.id);
+        const needed = minRowsPerTab - tabRegs.length;
+        if (needed > 0) {
+          for (let i = 0; i < needed; i++) {
+            state.registrations.push({
+              id: `reg_${baseTime}_${tIdx}_${i}_${Math.random().toString(36).slice(2, 6)}`,
+              tabId: tab.id,
+              createdAt: baseTime + tIdx * 100 + i,
+              hall: '',
+              name: '',
+              gender: '',
+              grade: '',
+              att_0102: false,
+              att_0213: false,
+              att_0219: false,
+              volunteerDoc: false,
+              note: ''
+            });
+          }
+          changed = true;
+        }
+      });
+      return changed;
+    }
+
+    function finishInitialRender() {
+      ensureDefaultBlankRows(5);
+      const skeleton = document.getElementById('loadingSkeleton');
+      const content = document.getElementById('appContent');
+      if (skeleton) skeleton.classList.add('hidden');
+      if (content) content.classList.remove('hidden');
+      renderNavigation();
+      renderCurrentView();
+    }
+
+    async function initApp() {
+      loadLocalBackup();
+
+      if (state.googleScriptUrl && state.googleScriptUrl.startsWith('https://script.google.com/')) {
+        state.sheetSyncMode = true;
+        setSyncStatus('saving');
+        const ok = await fetchFromGoogleSheet(false, true);
+        if (ok) {
+          finishInitialRender();
+          startGoogleSheetPolling();
+          return;
+        }
+      }
+
+      state.cloudMode = false;
+      ensureDefaultBlankRows(5);
+      saveLocalBackup();
+      if (!state.sheetSyncMode) setSyncStatus('local');
+      finishInitialRender();
+    }
+
+    async function persistGuide() {
+      lastLocalEditAt = Date.now();
+      saveLocalBackup();
+      if (state.sheetSyncMode) {
+        await postToGoogleSheet({ action: 'saveGuide', guide: state.guide });
+      }
+    }
+
+    async function persistSettings() {
+      lastLocalEditAt = Date.now();
+      saveLocalBackup();
+      if (state.sheetSyncMode) {
+        await postToGoogleSheet({ action: 'saveSettings', settings: state.settings });
+      }
+    }
+
+    async function persistTabs(changedTabId = null) {
+      lastLocalEditAt = Date.now();
+      saveLocalBackup();
+      if (state.sheetSyncMode) {
+        if (changedTabId && state.tabs[changedTabId]) {
+          await postToGoogleSheet({ action: 'saveTabMeta', tab: state.tabs[changedTabId] });
+        } else {
+          await postToGoogleSheet({ action: 'saveAllTabsMeta', tabs: state.tabs });
+        }
+      }
+    }
+
+    async function persistRegistrationUpdate(regId, patch, immediate = false) {
+      lastLocalEditAt = Date.now();
+      const target = state.registrations.find(r => r.id === regId);
+      if (target) Object.assign(target, patch);
+      saveLocalBackup();
+
+      if (state.sheetSyncMode && target) {
+        queueDivisionSync(target.tabId, immediate);
+      }
+    }
+
+    async function persistRegistrationDelete(regId) {
+      lastLocalEditAt = Date.now();
+      const target = state.registrations.find(r => r.id === regId);
+      const targetTabId = target ? target.tabId : null;
+      state.registrations = state.registrations.filter(r => r.id !== regId);
+      ensureDefaultBlankRows(5);
+      saveLocalBackup();
+      if (state.sheetSyncMode && targetTabId) {
+        queueDivisionSync(targetTabId, true);
+      }
+    }
+
+    window.flushPendingDebounces = function() {
+      Object.keys(debounceTimers).forEach(key => {
+        const entry = debounceTimers[key];
+        if (entry && entry.timer) {
+          clearTimeout(entry.timer);
+          if (typeof entry.fn === 'function') entry.fn();
+          delete debounceTimers[key];
+        }
+      });
+    };
+
+    // ==================== 導覽列渲染 ====================
+    function renderNavigation() {
+      const { grand } = computeRegionAndGrandStats();
+      const totalBadge = document.getElementById('navTotalBadge');
+      if (totalBadge) totalBadge.textContent = grand.total;
+
+      ['guide', 'summary'].forEach(id => {
+        const btn = document.getElementById(`nav-tab-${id}`);
+        if (!btn) return;
+        const active = state.activeTab === id;
+        btn.className = active
+          ? 'nav-pill px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1 shrink-0 bg-indigo-600 text-white shadow-xs'
+          : 'nav-pill px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1 shrink-0 bg-white text-slate-700 border border-slate-200 hover:bg-slate-100';
+      });
+
+      const sorted = getSortedTabs();
+      const tpTabs = sorted.filter(t => t.region === 'taipei');
+      const ntTabs = sorted.filter(t => t.region === 'newtaipei');
+
+      const tpGroup = document.getElementById('taipeiNavGroup');
+      const ntGroup = document.getElementById('newtaipeiNavGroup');
+      if (tpGroup) {
+        tpGroup.classList.toggle('md:flex', state.navRegionFilter !== 'newtaipei');
+        tpGroup.classList.toggle('md:hidden', state.navRegionFilter === 'newtaipei');
+      }
+      if (ntGroup) {
+        ntGroup.classList.toggle('md:flex', state.navRegionFilter !== 'taipei');
+        ntGroup.classList.toggle('md:hidden', state.navRegionFilter === 'taipei');
+      }
+
+      const renderTabButtons = (list, activeColorCls) => list.map(tab => {
+        const stats = computeTabStats(tab.id);
+        const isActive = state.activeTab === tab.id;
+        return `
+          <button onclick="switchTab('${tab.id}')"
+            class="px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 shrink-0 ${
+              isActive
+                ? `${activeColorCls} text-white shadow-xs`
+                : 'bg-white text-slate-700 border border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+            }">
+            <span>${escapeHtml(tab.name)}</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[11px] tabular-nums ${
+              isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+            }">${stats.total}</span>
+          </button>
+        `;
+      }).join('');
+
+      const tpListEl = document.getElementById('taipeiTabsList');
+      const ntListEl = document.getElementById('newtaipeiTabsList');
+      if (tpListEl) tpListEl.innerHTML = renderTabButtons(tpTabs, 'bg-indigo-600');
+      if (ntListEl) ntListEl.innerHTML = renderTabButtons(ntTabs, 'bg-teal-600');
+
+      const mobileSelect = document.getElementById('mobileQuickTabSelect');
+      if (mobileSelect) {
+        const buildOptions = (list) => list.map(tab => {
+          const stats = computeTabStats(tab.id);
+          return `<option value="${tab.id}" ${state.activeTab === tab.id ? 'selected' : ''}>${escapeHtml(tab.name)}（${stats.total} 人）</option>`;
+        }).join('');
+
+        mobileSelect.innerHTML = `
+          <optgroup label="總覽分頁">
+            <option value="summary" ${state.activeTab === 'summary' ? 'selected' : ''}>統計總表（全體 ${grand.total} 人）</option>
+            <option value="guide" ${state.activeTab === 'guide' ? 'selected' : ''}>填報說明頁面</option>
+          </optgroup>
+          <optgroup label="台北市（10 個分頁）">
+            ${buildOptions(tpTabs)}
+          </optgroup>
+          <optgroup label="新北市（5 個分頁）">
+            ${buildOptions(ntTabs)}
+          </optgroup>
+        `;
+      }
+    }
+
+    // ==================== 頁面渲染路由 ====================
+    function renderCurrentView() {
+      const container = document.getElementById('appContent');
+      if (!container) return;
+
+      if (state.activeTab === 'guide') {
+        container.innerHTML = renderGuidePage();
+      } else if (state.activeTab === 'summary') {
+        container.innerHTML = renderSummaryPage();
+      } else if (state.tabs[state.activeTab]) {
+        container.innerHTML = renderDivisionPage(state.activeTab);
+      } else {
+        state.activeTab = 'summary';
+        container.innerHTML = renderSummaryPage();
+      }
+    }
+
+    // ==================== 1. 說明頁面 ====================
+    function renderGuidePage() {
+      const g = state.guide;
+      const editing = state.isAdmin && state.isEditingGuide;
+
+      return `
+        <div class="space-y-6">
+          <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs">
+            <div class="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-5">
+              <div class="space-y-1.5 flex-1 min-w-[260px]">
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700">
+                  <span>填報指南與注意事項</span>
+                </div>
+                ${editing
+                  ? `<input type="text" id="guideTitleInput" value="${escapeHtml(g.title)}" class="w-full text-xl sm:text-2xl font-bold text-slate-900 px-3 py-1.5 rounded-xl border border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 mt-1" />`
+                  : `<h2 class="text-xl sm:text-2xl font-bold text-slate-900">${escapeHtml(g.title)}</h2>`
+                }
+                ${editing
+                  ? `<textarea id="guideSubtitleInput" rows="2" class="w-full text-sm text-slate-600 px-3 py-1.5 rounded-xl border border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 mt-2">${escapeHtml(g.subtitle)}</textarea>`
+                  : `<p class="text-sm text-slate-600 leading-relaxed">${escapeHtml(g.subtitle)}</p>`
+                }
+              </div>
+
+              ${state.isAdmin ? `
+                <div class="flex items-center gap-2">
+                  ${editing ? `
+                    <button onclick="saveGuideEdits()" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-xs">儲存說明內容</button>
+                    <button onclick="toggleEditGuide()" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition">取消</button>
+                  ` : `
+                    <button onclick="toggleEditGuide()" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-amber-500 text-slate-950 hover:bg-amber-400 transition shadow-2xs flex items-center gap-1.5">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/></svg>
+                      編輯說明頁面
+                    </button>
+                  `}
+                </div>
+              ` : ''}
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-6">
+              <div class="rounded-xl bg-indigo-50/60 border border-indigo-100 p-5 space-y-2.5">
+                <div class="flex items-center gap-2 text-indigo-800 font-bold text-base">
+                  <span class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs">1</span>
+                  <h3>重要日程與集調安排</h3>
+                </div>
+                ${editing
+                  ? `<textarea id="guideDatesInput" rows="5" class="w-full text-sm text-slate-700 bg-white p-3 rounded-xl border border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">${escapeHtml(g.importantDates)}</textarea>`
+                  : `<div class="text-sm text-slate-700 leading-relaxed space-y-1">${formatMultilineHtml(g.importantDates)}</div>`
+                }
+              </div>
+
+              <div class="rounded-xl bg-emerald-50/60 border border-emerald-100 p-5 space-y-2.5">
+                <div class="flex items-center gap-2 text-emerald-800 font-bold text-base">
+                  <span class="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-xs">2</span>
+                  <h3>志工文件填寫提醒</h3>
+                </div>
+                ${editing
+                  ? `<textarea id="guideVolunteerInput" rows="5" class="w-full text-sm text-slate-700 bg-white p-3 rounded-xl border border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500">${escapeHtml(g.volunteerNotice)}</textarea>`
+                  : `<div class="text-sm text-slate-700 leading-relaxed space-y-1">${formatMultilineHtml(g.volunteerNotice)}</div>`
+                }
+              </div>
+
+              <div class="md:col-span-2 rounded-xl bg-slate-50 border border-slate-200/80 p-5 space-y-2.5">
+                <div class="flex items-center gap-2 text-slate-800 font-bold text-base">
+                  <span class="w-7 h-7 rounded-lg bg-slate-800 text-white flex items-center justify-center text-xs">3</span>
+                  <h3>各區分頁填報規則（台北市 10 區 / 新北市 5 區）</h3>
+                </div>
+                ${editing
+                  ? `<textarea id="guideRulesInput" rows="5" class="w-full text-sm text-slate-700 bg-white p-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">${escapeHtml(g.reportingRules)}</textarea>`
+                  : `<div class="text-sm text-slate-700 leading-relaxed space-y-1">${formatMultilineHtml(g.reportingRules)}</div>`
+                }
+              </div>
+
+              <div class="md:col-span-2 rounded-xl bg-amber-50 border border-amber-200 p-4 flex items-start gap-3">
+                <div class="text-amber-600 mt-0.5 shrink-0">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+                </div>
+                <div class="flex-1">
+                  ${editing
+                    ? `<textarea id="guideExtraInput" rows="2" class="w-full text-sm text-amber-950 bg-white p-2.5 rounded-xl border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500">${escapeHtml(g.extraAnnouncement)}</textarea>`
+                    : `<div class="text-sm font-medium text-amber-950 leading-relaxed">${formatMultilineHtml(g.extraAnnouncement)}</div>`
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-6 pt-5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+              <span class="text-xs text-slate-500">準備好開始填報或查看各區統計了嗎？</span>
+              <div class="flex flex-wrap gap-2">
+                <button onclick="switchTab('summary')" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-xs">前往統計總表 &rarr;</button>
+                <button onclick="switchTab('tp-01')" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition">進入城中區填報</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ==================== 2. 統計總表頁面 ====================
+    function renderSummaryPage() {
+      const { taipei, newtaipei, grand } = computeRegionAndGrandStats();
+      const sorted = getSortedTabs();
+      const tpTabs = sorted.filter(t => t.region === 'taipei');
+      const ntTabs = sorted.filter(t => t.region === 'newtaipei');
+
+      const pct = (part, total) => total > 0 ? Math.round((part / total) * 100) : 0;
+
+      const renderSummaryRow = (tab) => {
+        const s = computeTabStats(tab.id);
+        const ov = tab.manualOverride || {};
+        const editNum = state.isAdmin && state.summaryManualMode;
+
+        const renderMetricCell = (field, val, textColor = 'text-slate-800') => {
+          if (editNum) {
+            const rawVal = ov.enabled && ov[field] !== null && ov[field] !== undefined ? ov[field] : '';
+            return `
+              <td class="py-2 px-2 text-center">
+                <input type="number" min="0" placeholder="${val}" value="${rawVal}"
+                  onchange="updateManualOverride('${tab.id}', '${field}', this.value)"
+                  class="w-16 text-center px-1.5 py-1 rounded-lg border border-amber-300 bg-amber-50/60 text-xs font-bold tabular-nums focus:outline-none focus:ring-2 focus:ring-amber-500" />
+              </td>
+            `;
+          }
+          return `
+            <td class="py-2.5 px-3 text-center font-semibold tabular-nums ${textColor}">
+              ${val}${(ov.enabled && ov[field] !== null && ov[field] !== undefined && ov[field] !== '') ? '<span class="text-amber-500 ml-0.5" title="管理者手動覆寫值">*</span>' : ''}
+            </td>
+          `;
+        };
+
+        return `
+          <tr class="border-b border-slate-100 hover:bg-indigo-50/40 transition group">
+            <td class="sticky-col-1 bg-white group-hover:bg-indigo-50/40 py-2.5 px-3.5 font-semibold text-slate-900 whitespace-nowrap border-r border-slate-100">
+              <div class="flex items-center justify-between gap-2">
+                <button onclick="switchTab('${tab.id}')" class="text-left hover:text-indigo-600 hover:underline flex items-center gap-1.5">
+                  <span>${escapeHtml(tab.name)}</span>
+                </button>
+                ${state.isAdmin ? `
+                  <button onclick="openRenameTabModal('${tab.id}')" title="修改分頁名稱" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-indigo-600 p-1 rounded transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z"/></svg>
+                  </button>
+                ` : ''}
+              </div>
+            </td>
+            ${renderMetricCell('total', s.total, 'text-slate-900 font-bold')}
+            ${renderMetricCell('att_0102', s.att_0102)}
+            ${renderMetricCell('att_0213', s.att_0213)}
+            ${renderMetricCell('att_0219', s.att_0219)}
+            ${renderMetricCell('volunteerDoc', s.volunteerDoc, 'text-emerald-700 font-bold')}
+            <td class="py-2 px-3 min-w-[160px]">
+              <input type="text" value="${escapeHtml(tab.summaryNote || '')}"
+                placeholder="${state.isAdmin ? '輸入總表備註...' : '—'}"
+                ${state.isAdmin ? '' : 'disabled'}
+                oninput="updateSummaryNote('${tab.id}', this.value)"
+                class="w-full px-2.5 py-1 rounded-lg text-xs border ${
+                  state.isAdmin
+                    ? 'border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500'
+                    : 'border-transparent bg-transparent text-slate-500 cursor-default'
+                }" />
+            </td>
+          </tr>
+        `;
+      };
+
+      const renderSubtotalRow = (label, stats, bgClass, textClass) => `
+        <tr class="${bgClass} ${textClass} font-bold border-y border-slate-200/90">
+          <td class="sticky-col-1 ${bgClass} py-2.5 px-3.5 whitespace-nowrap border-r border-slate-200/70">${label}</td>
+          <td class="py-2.5 px-3 text-center tabular-nums text-sm sm:text-base">${stats.total}</td>
+          <td class="py-2.5 px-3 text-center tabular-nums">${stats.att_0102}</td>
+          <td class="py-2.5 px-3 text-center tabular-nums">${stats.att_0213}</td>
+          <td class="py-2.5 px-3 text-center tabular-nums">${stats.att_0219}</td>
+          <td class="py-2.5 px-3 text-center tabular-nums">${stats.volunteerDoc}</td>
+          <td class="py-2.5 px-3 text-xs font-normal opacity-80">自動加總</td>
+        </tr>
+      `;
+
+      return `
+        <div class="space-y-3 sm:space-y-4">
+          <!-- 精簡型 5 張核心統計摘要卡片 -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-2.5">
+            <div class="bg-white rounded-xl border border-slate-200 px-3 py-2 sm:px-3.5 sm:py-2.5 shadow-2xs">
+              <div class="text-[11px] font-medium text-slate-500 leading-tight">全體總報名人數</div>
+              <div class="mt-0.5 flex items-baseline gap-1.5">
+                <span class="text-xl sm:text-2xl font-bold text-indigo-600 tabular-nums leading-none">${grand.total}</span>
+                <span class="text-[11px] text-slate-400">人</span>
+              </div>
+              <div class="mt-1 text-[11px] text-slate-500 tabular-nums truncate">北市 ${taipei.total} &bull; 新北 ${newtaipei.total}</div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 px-3 py-2 sm:px-3.5 sm:py-2.5 shadow-2xs">
+              <div class="text-[11px] font-medium text-slate-500 leading-tight">1/2 出席總人數</div>
+              <div class="mt-0.5 flex items-baseline gap-1.5">
+                <span class="text-xl sm:text-2xl font-bold text-slate-900 tabular-nums leading-none">${grand.att_0102}</span>
+                <span class="text-[11px] text-slate-400">人</span>
+              </div>
+              <div class="mt-1 text-[11px] text-emerald-600 font-medium tabular-nums">出席率 ${pct(grand.att_0102, grand.total)}%</div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 px-3 py-2 sm:px-3.5 sm:py-2.5 shadow-2xs">
+              <div class="text-[11px] font-medium text-slate-500 leading-tight">2/13 出席總人數</div>
+              <div class="mt-0.5 flex items-baseline gap-1.5">
+                <span class="text-xl sm:text-2xl font-bold text-slate-900 tabular-nums leading-none">${grand.att_0213}</span>
+                <span class="text-[11px] text-slate-400">人</span>
+              </div>
+              <div class="mt-1 text-[11px] text-emerald-600 font-medium tabular-nums">出席率 ${pct(grand.att_0213, grand.total)}%</div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 px-3 py-2 sm:px-3.5 sm:py-2.5 shadow-2xs">
+              <div class="text-[11px] font-medium text-slate-500 leading-tight">2/19 出席總人數</div>
+              <div class="mt-0.5 flex items-baseline gap-1.5">
+                <span class="text-xl sm:text-2xl font-bold text-slate-900 tabular-nums leading-none">${grand.att_0219}</span>
+                <span class="text-[11px] text-slate-400">人</span>
+              </div>
+              <div class="mt-1 text-[11px] text-emerald-600 font-medium tabular-nums">出席率 ${pct(grand.att_0219, grand.total)}%</div>
+            </div>
+
+            <div class="col-span-2 sm:col-span-1 bg-white rounded-xl border border-slate-200 px-3 py-2 sm:px-3.5 sm:py-2.5 shadow-2xs">
+              <div class="text-[11px] font-medium text-slate-500 leading-tight">志工文件完成</div>
+              <div class="mt-0.5 flex items-baseline gap-1.5">
+                <span class="text-xl sm:text-2xl font-bold text-emerald-600 tabular-nums leading-none">${grand.volunteerDoc}</span>
+                <span class="text-[11px] text-slate-400">/ ${grand.total} 人</span>
+              </div>
+              <div class="mt-1 text-[11px] text-slate-500 tabular-nums">完成率 ${pct(grand.volunteerDoc, grand.total)}%</div>
+            </div>
+          </div>
+
+          <!-- 總表主表格卡片 -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+            <div class="p-4 sm:px-6 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 bg-slate-50/70">
+              <div>
+                <h2 class="text-base sm:text-lg font-bold text-slate-900">各分頁報名與出席統計總表</h2>
+                <p class="text-xs text-slate-500 mt-0.5">點擊任一分頁名稱可直接進入該分頁檢視或編輯名單</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <div class="flex items-center gap-1 bg-white border border-slate-300 rounded-xl px-1.5 py-1 shadow-2xs" title="調整總表文字大小以完整顯示畫面">
+                  <button type="button" onclick="setSummaryZoom(-10)" ${state.summaryZoom <= 70 ? 'disabled' : ''}
+                    class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:bg-slate-100 disabled:opacity-35 transition font-bold text-sm" aria-label="縮小總表比例">−</button>
+                  <button type="button" onclick="setSummaryZoom(0)" title="點擊重設為 100%"
+                    class="px-1.5 text-xs font-bold text-slate-700 tabular-nums hover:text-indigo-600 transition min-w-[44px] text-center">${state.summaryZoom}%</button>
+                  <button type="button" onclick="setSummaryZoom(10)" ${state.summaryZoom >= 120 ? 'disabled' : ''}
+                    class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:bg-slate-100 disabled:opacity-35 transition font-bold text-sm" aria-label="放大總表比例">＋</button>
+                </div>
+
+                ${state.isAdmin ? `
+                  <button onclick="toggleSummaryManualMode()" class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition flex items-center gap-1.5 ${
+                    state.summaryManualMode
+                      ? 'bg-amber-500 text-slate-950 border-amber-600 shadow-2xs'
+                      : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                  }">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/></svg>
+                    ${state.summaryManualMode ? '完成數字調整' : '調整總表數字'}
+                  </button>
+                ` : ''}
+                <button onclick="exportSummaryCsv()" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition flex items-center gap-1.5 shadow-2xs">
+                  <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                  匯出總表 CSV
+                </button>
+              </div>
+            </div>
+
+            ${state.isAdmin && state.summaryManualMode ? `
+              <div class="bg-amber-50 border-b border-amber-200 px-4 sm:px-6 py-2.5 text-xs text-amber-900 flex items-center justify-between gap-2">
+                <span>💡 <strong>管理者數字微調模式已開啟：</strong>輸入數字將覆寫該分頁的自動加總顯示；若將欄位清空，則自動恢復為該分頁名單的即時加總。</span>
+              </div>
+            ` : ''}
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse transition-all" style="font-size: ${Math.round(14 * state.summaryZoom / 100)}px;">
+                <thead>
+                  <tr class="bg-slate-100/90 text-slate-600 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
+                    <th class="sticky-col-1 bg-slate-100 py-3 px-3.5 border-r border-slate-200">分頁名稱</th>
+                    <th class="py-3 px-3 text-center">報名人數</th>
+                    <th class="py-3 px-3 text-center">1/2出席</th>
+                    <th class="py-3 px-3 text-center">2/13出席</th>
+                    <th class="py-3 px-3 text-center">2/19出席</th>
+                    <th class="py-3 px-3 text-center text-emerald-800">志工文件完成</th>
+                    <th class="py-3 px-3">總表備註</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- 全體總計列置頂 -->
+                  <tr class="bg-slate-900 text-white font-bold">
+                    <td class="sticky-col-1 bg-slate-900 py-3 px-3.5 whitespace-nowrap border-r border-slate-700">全體總計</td>
+                    <td class="py-3 px-3 text-center tabular-nums text-base text-amber-300">${grand.total}</td>
+                    <td class="py-3 px-3 text-center tabular-nums">${grand.att_0102}</td>
+                    <td class="py-3 px-3 text-center tabular-nums">${grand.att_0213}</td>
+                    <td class="py-3 px-3 text-center tabular-nums">${grand.att_0219}</td>
+                    <td class="py-3 px-3 text-center tabular-nums text-emerald-300">${grand.volunteerDoc}</td>
+                    <td class="py-3 px-3 text-xs font-normal text-slate-300">台北市 10 區 ＋ 新北市 5 區</td>
+                  </tr>
+
+                  <!-- 台北市小計與 10 個分頁 -->
+                  ${renderSubtotalRow('台北市小計（10 區）', taipei, 'bg-indigo-50', 'text-indigo-950')}
+                  ${tpTabs.map(renderSummaryRow).join('')}
+
+                  <!-- 新北市小計與 5 個分頁 -->
+                  ${renderSubtotalRow('新北市小計（5 區）', newtaipei, 'bg-teal-50', 'text-teal-950')}
+                  ${ntTabs.map(renderSummaryRow).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ==================== 3. 各分頁詳細報名表 ====================
+    function renderDivisionPage(tabId) {
+      const tab = state.tabs[tabId];
+      const allRegs = state.registrations.filter(r => r.tabId === tabId);
+      const filledRegs = allRegs.filter(r => !isRegEmpty(r));
+      const filteredRegs = allRegs.filter(r => {
+        if (state.filters.grade !== 'all' && r.grade !== state.filters.grade) return false;
+        if (state.filters.docStatus === 'done' && !r.volunteerDoc) return false;
+        if (state.filters.docStatus === 'pending' && r.volunteerDoc) return false;
+        if (state.filters.search.trim() !== '') {
+          const q = state.filters.search.trim().toLowerCase();
+          const hay = `${r.hall} ${r.name} ${r.note}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+
+      const isTp = tab.region === 'taipei';
+      const regionLabel = isTp ? '台北市分頁' : '新北市分頁';
+      const badgeColor = isTp ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-teal-50 text-teal-700 border-teal-200';
+      const coordLocked = isCoordinatorsLocked();
+      const addDelLocked = isAddDeleteLocked();
+
+      const lockBadge = (fieldKey) => isFieldLocked(fieldKey)
+        ? `<span class="inline-flex items-center text-amber-600 ml-1" title="此欄位已由管理者鎖定"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd"/></svg></span>`
+        : '';
+
+      const coordinatorsList = Array.isArray(tab.coordinators) && tab.coordinators.length > 0
+        ? tab.coordinators
+        : [
+            { hall: '', name: '', gender: '', phone: '' },
+            { hall: '', name: '', gender: '', phone: '' },
+            { hall: '', name: '', gender: '', phone: '' }
+          ];
+
+      return `
+        <div class="space-y-6">
+          <!-- 頂部標題與匯出操作列 -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <span class="px-2.5 py-1 rounded-lg text-xs font-bold border ${badgeColor}">${regionLabel}</span>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h2 class="text-xl font-bold text-slate-900">${escapeHtml(tab.name)}</h2>
+                  ${state.isAdmin ? `
+                    <button onclick="openRenameTabModal('${tab.id}')" class="text-xs text-slate-400 hover:text-indigo-600 underline">修改名稱</button>
+                  ` : ''}
+                </div>
+                <p class="text-xs text-slate-500 mt-0.5">填寫負責人與兒童報名資料，所有變更將自動儲存並同步至統計總表</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="switchTab('summary')" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">返回統計總表</button>
+              <button onclick="exportDivisionCsv('${tab.id}')" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition flex items-center gap-1.5 shadow-2xs">
+                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                匯出本區 CSV
+              </button>
+            </div>
+          </div>
+
+          <!-- 區塊一：負責人卡片 -->
+          <section class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+            <div class="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-5 rounded-full ${isTp ? 'bg-indigo-600' : 'bg-teal-600'}"></span>
+                <h3 class="text-sm sm:text-base font-bold text-slate-900">負責人</h3>
+                <span class="text-xs text-slate-500">（弟兄／姊妹不拘，共 ${coordinatorsList.length} 位）</span>
+              </div>
+              <div class="flex items-center gap-2">
+                ${coordLocked ? `
+                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd"/></svg>
+                    管理者已鎖定負責人
+                  </span>
+                ` : `
+                  <button type="button" onclick="addCoordinatorRow('${tab.id}', event)"
+                    class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                    新增負責人
+                  </button>
+                `}
+              </div>
+            </div>
+
+            <div class="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+              ${coordinatorsList.map((coord, idx) => `
+                <div class="rounded-xl border border-slate-200/90 bg-slate-50/50 p-3.5 space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-600">負責人 #${idx + 1}</span>
+                    <div class="flex items-center gap-2">
+                      <span class="text-[11px] text-slate-400">聯絡窗口</span>
+                      ${!coordLocked && coordinatorsList.length > 3 ? `
+                        <button type="button" onclick="removeCoordinatorRow('${tab.id}', ${idx})" title="移除此負責人列"
+                          class="text-slate-400 hover:text-rose-600 p-0.5 rounded transition">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                      ` : ''}
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-500 mb-1">會所</label>
+                      <input type="text" value="${escapeHtml(coord.hall)}" placeholder="例：一會所" ${coordLocked ? 'disabled' : ''}
+                        oninput="updateCoordinator('${tab.id}', ${idx}, 'hall', this.value)"
+                        onblur="flushPendingDebounces()"
+                        class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-500" />
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-500 mb-1">名字</label>
+                      <input type="text" value="${escapeHtml(coord.name)}" placeholder="輸入姓名" ${coordLocked ? 'disabled' : ''}
+                        oninput="updateCoordinator('${tab.id}', ${idx}, 'name', this.value)"
+                        onblur="flushPendingDebounces()"
+                        class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-500" />
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-500 mb-1">性別</label>
+                      <select ${coordLocked ? 'disabled' : ''} onchange="updateCoordinator('${tab.id}', ${idx}, 'gender', this.value)"
+                        class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-500">
+                        <option value="" ${!coord.gender ? 'selected' : ''}>請選擇</option>
+                        <option value="弟兄" ${coord.gender === '弟兄' ? 'selected' : ''}>弟兄</option>
+                        <option value="姊妹" ${coord.gender === '姊妹' ? 'selected' : ''}>姊妹</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-500 mb-1">電話</label>
+                      <input type="tel" value="${escapeHtml(coord.phone)}" placeholder="09xx-xxx-xxx" ${coordLocked ? 'disabled' : ''}
+                        oninput="updateCoordinator('${tab.id}', ${idx}, 'phone', this.value)"
+                        onblur="flushPendingDebounces()"
+                        class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-500" />
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </section>
+
+          <!-- 區塊二：本區兒童名單 -->
+          <section class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+            <div class="p-4 sm:px-5 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+              <div class="flex items-center gap-2.5">
+                <h3 class="text-sm sm:text-base font-bold text-slate-900">兒童名單</h3>
+                <span id="divisionCountBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800 tabular-nums">${filledRegs.length} 人</span>
+              </div>
+
+              <!-- 搜尋、篩選與新增按鈕 -->
+              <div class="flex flex-wrap items-center gap-2 flex-1 sm:flex-initial justify-end">
+                <div class="relative flex-1 sm:w-48 min-w-[140px]">
+                  <input id="regSearchInput" type="text" value="${escapeHtml(state.filters.search)}" placeholder="搜尋會所、名字或備註..."
+                    id="regSearchInput" oninput="updateRegFilter('search', this.value)"
+                    class="w-full pl-8 pr-3 py-1.5 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                  <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+                </div>
+
+                <select onchange="updateRegFilter('grade', this.value)" class="px-2.5 py-1.5 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  <option value="all" ${state.filters.grade === 'all' ? 'selected' : ''}>全部年級</option>
+                  <option value="4年級" ${state.filters.grade === '4年級' ? 'selected' : ''}>4年級</option>
+                  <option value="5年級" ${state.filters.grade === '5年級' ? 'selected' : ''}>5年級</option>
+                  <option value="6年級" ${state.filters.grade === '6年級' ? 'selected' : ''}>6年級</option>
+                </select>
+
+                ${!addDelLocked ? `
+                  <button type="button" onclick="addRegistrationRow('${tab.id}', event)" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-xs flex items-center gap-1 shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                    新增兒童
+                  </button>
+                ` : `
+                  <span class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-100 text-amber-800">已鎖定新增</span>
+                `}
+              </div>
+            </div>
+
+            <!-- 本區即時小計統計條 -->
+            <div id="divisionSubtotalBar" class="bg-indigo-50/70 border-b border-indigo-100">
+              ${renderDivisionSubtotalContent(allRegs)}
+            </div>
+
+            ${filteredRegs.length === 0 ? `
+              <div class="py-12 px-4 text-center space-y-2">
+                <p class="text-sm font-semibold text-slate-700">${allRegs.length === 0 ? '本分頁目前尚無兒童資料' : '沒有符合篩選條件的兒童'}</p>
+                <p class="text-xs text-slate-500">${allRegs.length === 0 ? '點擊右上方「新增兒童」按鈕即可開始登錄。' : '請嘗試清除搜尋關鍵字或切換年級篩選。'}</p>
+              </div>
+            ` : `
+              <!-- 手機版卡片視圖 (< 768px) -->
+              <div class="md:hidden divide-y divide-slate-200">
+                ${filteredRegs.map(reg => {
+                  const realSeq = allRegs.findIndex(x => x.id === reg.id) + 1;
+                  return `
+                    <div class="p-4 space-y-3 bg-white">
+                      <div class="flex items-center justify-between">
+                        <span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-md text-xs font-bold bg-slate-100 text-slate-700 tabular-nums">#${realSeq}</span>
+                        ${!addDelLocked ? `
+                          <button onclick="requestDeleteRegistration('${reg.id}')" class="text-xs font-medium text-rose-600 hover:text-rose-700 px-2 py-1 rounded-lg hover:bg-rose-50 transition">刪除</button>
+                        ` : ''}
+                      </div>
+
+                      <div class="grid grid-cols-2 gap-2">
+                        <div>
+                          <label class="block text-[11px] font-semibold text-slate-500 mb-1">會所 ${lockBadge('hall')}</label>
+                          <input type="text" data-reg-hall-mobile="${reg.id}" value="${escapeHtml(reg.hall)}" placeholder="會所名稱" ${isFieldLocked('hall') ? 'disabled' : ''}
+                            oninput="debouncedUpdateRegistration('${reg.id}', 'hall', this.value)"
+                            onblur="flushPendingDebounces()"
+                            class="w-full px-2.5 py-2 rounded-lg border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-500" />
+                        </div>
+                        <div>
+                          <label class="block text-[11px] font-semibold text-slate-500 mb-1">名字 ${lockBadge('name')}</label>
+                          <input type="text" data-reg-name-mobile="${reg.id}" value="${escapeHtml(reg.name)}" placeholder="輸入姓名" ${isFieldLocked('name') ? 'disabled' : ''}
+                            oninput="debouncedUpdateRegistration('${reg.id}', 'name', this.value)"
+                            onblur="flushPendingDebounces()"
+                            class="w-full px-2.5 py-2 rounded-lg border border-slate-200 text-base font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-500" />
+                        </div>
+                        <div>
+                          <label class="block text-[11px] font-semibold text-slate-500 mb-1">性別 ${lockBadge('gender')}</label>
+                          <select ${isFieldLocked('gender') ? 'disabled' : ''} onchange="updateRegistrationField('${reg.id}', 'gender', this.value)"
+                            class="w-full px-2.5 py-2 rounded-lg border border-slate-200 bg-white text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-500">
+                            <option value="" ${!reg.gender ? 'selected' : ''}>請選擇</option>
+                            <option value="男" ${reg.gender === '男' ? 'selected' : ''}>男</option>
+                            <option value="女" ${reg.gender === '女' ? 'selected' : ''}>女</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label class="block text-[11px] font-semibold text-slate-500 mb-1">年級 ${lockBadge('grade')}</label>
+                          <select ${isFieldLocked('grade') ? 'disabled' : ''} onchange="updateRegistrationField('${reg.id}', 'grade', this.value)"
+                            class="w-full px-2.5 py-2 rounded-lg border border-slate-200 bg-white text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-500">
+                            <option value="" ${!reg.grade ? 'selected' : ''}>請選擇</option>
+                            <option value="4年級" ${reg.grade === '4年級' ? 'selected' : ''}>4年級</option>
+                            <option value="5年級" ${reg.grade === '5年級' ? 'selected' : ''}>5年級</option>
+                            <option value="6年級" ${reg.grade === '6年級' ? 'selected' : ''}>6年級</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div class="grid grid-cols-2 gap-2 pt-1">
+                        <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-slate-50/70">
+                          <input type="checkbox" ${reg.att_0102 ? 'checked' : ''} ${isFieldLocked('att_0102') ? 'disabled' : ''}
+                            onchange="updateRegistrationField('${reg.id}', 'att_0102', this.checked)" class="accent-indigo-600 rounded" />
+                          <span class="text-xs font-semibold text-slate-700">1/2出席 ${lockBadge('att_0102')}</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-slate-50/70">
+                          <input type="checkbox" ${reg.att_0213 ? 'checked' : ''} ${isFieldLocked('att_0213') ? 'disabled' : ''}
+                            onchange="updateRegistrationField('${reg.id}', 'att_0213', this.checked)" class="accent-indigo-600 rounded" />
+                          <span class="text-xs font-semibold text-slate-700">2/13出席 ${lockBadge('att_0213')}</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-slate-50/70">
+                          <input type="checkbox" ${reg.att_0219 ? 'checked' : ''} ${isFieldLocked('att_0219') ? 'disabled' : ''}
+                            onchange="updateRegistrationField('${reg.id}', 'att_0219', this.checked)" class="accent-indigo-600 rounded" />
+                          <span class="text-xs font-semibold text-slate-700">2/19出席 ${lockBadge('att_0219')}</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-2.5 rounded-xl border border-emerald-200 bg-emerald-50/50">
+                          <input type="checkbox" ${reg.volunteerDoc ? 'checked' : ''} ${isFieldLocked('volunteerDoc') ? 'disabled' : ''}
+                            onchange="updateRegistrationField('${reg.id}', 'volunteerDoc', this.checked)" class="accent-emerald-600 rounded" />
+                          <span class="text-xs font-semibold text-emerald-900">志工文件 ${lockBadge('volunteerDoc')}</span>
+                        </label>
+                      </div>
+
+                      <div>
+                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">備註 ${lockBadge('note')}</label>
+                        <input type="text" value="${escapeHtml(reg.note)}" placeholder="填寫備註事項..." ${isFieldLocked('note') ? 'disabled' : ''}
+                          oninput="debouncedUpdateRegistration('${reg.id}', 'note', this.value)"
+                          onblur="flushPendingDebounces()"
+                          class="w-full px-2.5 py-2 rounded-lg border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-500" />
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+
+              <!-- 電腦版高效能表格視圖 (>= 768px) -->
+              <div class="hidden md:block overflow-x-auto">
+                <table class="w-full text-sm text-left border-collapse">
+                  <thead>
+                    <tr class="bg-slate-100/90 text-slate-600 text-xs font-bold border-b border-slate-200 whitespace-nowrap">
+                      <th class="sticky-col-1 bg-slate-100 py-3 px-3 text-center w-13 border-r border-slate-200">序號</th>
+                      <th class="py-3 px-3 min-w-[120px]">會所 ${lockBadge('hall')}</th>
+                      <th class="py-3 px-3 min-w-[120px]">名字 ${lockBadge('name')}</th>
+                      <th class="py-3 px-2.5 min-w-[96px]">性別 ${lockBadge('gender')}</th>
+                      <th class="py-3 px-2.5 min-w-[105px]">年級 ${lockBadge('grade')}</th>
+                      <th class="py-3 px-2 text-center min-w-[76px]">1/2出席 ${lockBadge('att_0102')}</th>
+                      <th class="py-3 px-2 text-center min-w-[80px]">2/13出席 ${lockBadge('att_0213')}</th>
+                      <th class="py-3 px-2 text-center min-w-[80px]">2/19出席 ${lockBadge('att_0219')}</th>
+                      <th class="py-3 px-2.5 text-center min-w-[130px] text-emerald-800">填寫完成志工文件 ${lockBadge('volunteerDoc')}</th>
+                      <th class="py-3 px-3 min-w-[180px]">備註 ${lockBadge('note')}</th>
+                      ${!addDelLocked ? `<th class="py-3 px-3 text-center w-16">操作</th>` : ''}
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    ${filteredRegs.map((reg, idx) => {
+                      const realSeq = allRegs.findIndex(x => x.id === reg.id) + 1;
+                      const rowBg = idx % 2 === 1 ? 'bg-slate-50/40' : 'bg-white';
+                      return `
+                        <tr class="${rowBg} hover:bg-indigo-50/30 transition">
+                          <td class="sticky-col-1 bg-inherit py-2 px-3 text-center font-bold text-slate-500 tabular-nums border-r border-slate-200/80">${realSeq}</td>
+                          <td class="py-1.5 px-2.5">
+                            <input type="text" data-reg-hall="${reg.id}" value="${escapeHtml(reg.hall)}" placeholder="會所" ${isFieldLocked('hall') ? 'disabled' : ''}
+                              oninput="debouncedUpdateRegistration('${reg.id}', 'hall', this.value)"
+                              onblur="flushPendingDebounces()"
+                              class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-500" />
+                          </td>
+                          <td class="py-1.5 px-2.5">
+                            <input type="text" data-reg-name="${reg.id}" value="${escapeHtml(reg.name)}" placeholder="名字" ${isFieldLocked('name') ? 'disabled' : ''}
+                              oninput="debouncedUpdateRegistration('${reg.id}', 'name', this.value)"
+                              onblur="flushPendingDebounces()"
+                              class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-500" />
+                          </td>
+                          <td class="py-1.5 px-2">
+                            <select ${isFieldLocked('gender') ? 'disabled' : ''} onchange="updateRegistrationField('${reg.id}', 'gender', this.value)"
+                              class="w-full px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-500">
+                              <option value="" ${!reg.gender ? 'selected' : ''}>請選擇</option>
+                              <option value="男" ${reg.gender === '男' ? 'selected' : ''}>男</option>
+                              <option value="女" ${reg.gender === '女' ? 'selected' : ''}>女</option>
+                            </select>
+                          </td>
+                          <td class="py-1.5 px-2">
+                            <select ${isFieldLocked('grade') ? 'disabled' : ''} onchange="updateRegistrationField('${reg.id}', 'grade', this.value)"
+                              class="w-full px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-500">
+                              <option value="" ${!reg.grade ? 'selected' : ''}>請選擇</option>
+                              <option value="4年級" ${reg.grade === '4年級' ? 'selected' : ''}>4年級</option>
+                              <option value="5年級" ${reg.grade === '5年級' ? 'selected' : ''}>5年級</option>
+                              <option value="6年級" ${reg.grade === '6年級' ? 'selected' : ''}>6年級</option>
+                            </select>
+                          </td>
+                          <td class="py-1.5 px-2 text-center">
+                            <input type="checkbox" ${reg.att_0102 ? 'checked' : ''} ${isFieldLocked('att_0102') ? 'disabled' : ''}
+                              onchange="updateRegistrationField('${reg.id}', 'att_0102', this.checked)" class="accent-indigo-600 rounded align-middle" />
+                          </td>
+                          <td class="py-1.5 px-2 text-center">
+                            <input type="checkbox" ${reg.att_0213 ? 'checked' : ''} ${isFieldLocked('att_0213') ? 'disabled' : ''}
+                              onchange="updateRegistrationField('${reg.id}', 'att_0213', this.checked)" class="accent-indigo-600 rounded align-middle" />
+                          </td>
+                          <td class="py-1.5 px-2 text-center">
+                            <input type="checkbox" ${reg.att_0219 ? 'checked' : ''} ${isFieldLocked('att_0219') ? 'disabled' : ''}
+                              onchange="updateRegistrationField('${reg.id}', 'att_0219', this.checked)" class="accent-indigo-600 rounded align-middle" />
+                          </td>
+                          <td class="py-1.5 px-2 text-center bg-emerald-50/30">
+                            <input type="checkbox" ${reg.volunteerDoc ? 'checked' : ''} ${isFieldLocked('volunteerDoc') ? 'disabled' : ''}
+                              onchange="updateRegistrationField('${reg.id}', 'volunteerDoc', this.checked)" class="accent-emerald-600 rounded align-middle" />
+                          </td>
+                          <td class="py-1.5 px-2.5">
+                            <input type="text" value="${escapeHtml(reg.note)}" placeholder="備註事項..." ${isFieldLocked('note') ? 'disabled' : ''}
+                              oninput="debouncedUpdateRegistration('${reg.id}', 'note', this.value)"
+                              onblur="flushPendingDebounces()"
+                              class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100 disabled:text-slate-500" />
+                          </td>
+                          ${!addDelLocked ? `
+                            <td class="py-1.5 px-2 text-center">
+                              <button onclick="requestDeleteRegistration('${reg.id}')" title="刪除此筆資料" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                              </button>
+                            </td>
+                          ` : ''}
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            `}
+          </section>
+        </div>
+      `;
+    }
+
+    function renderDivisionSubtotalContent(allRegs) {
+      const filledRegs = allRegs.filter(r => !isRegEmpty(r));
+      const total = filledRegs.length;
+      const b = filledRegs.filter(r => r.gender === '男' || r.gender === '弟兄').length;
+      const s = filledRegs.filter(r => r.gender === '女' || r.gender === '姊妹').length;
+      const g4 = filledRegs.filter(r => r.grade === '4年級').length;
+      const g5 = filledRegs.filter(r => r.grade === '5年級').length;
+      const g6 = filledRegs.filter(r => r.grade === '6年級').length;
+      const a1 = filledRegs.filter(r => r.att_0102).length;
+      const a2 = filledRegs.filter(r => r.att_0213).length;
+      const a3 = filledRegs.filter(r => r.att_0219).length;
+      const docDone = filledRegs.filter(r => r.volunteerDoc).length;
+
+      return `
+        <div class="px-4 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-semibold text-indigo-950">
+          <span class="text-indigo-700 font-bold">本區小計：共 ${total} 人</span>
+          <span class="tabular-nums text-slate-700">男 ${b} / 女 ${s}</span>
+          <span class="tabular-nums text-slate-700">4年級 ${g4} &bull; 5年級 ${g5} &bull; 6年級 ${g6}</span>
+          <span class="tabular-nums px-2 py-0.5 rounded bg-white border border-indigo-200/80">1/2出席: ${a1}</span>
+          <span class="tabular-nums px-2 py-0.5 rounded bg-white border border-indigo-200/80">2/13出席: ${a2}</span>
+          <span class="tabular-nums px-2 py-0.5 rounded bg-white border border-indigo-200/80">2/19出席: ${a3}</span>
+          <span class="tabular-nums px-2 py-0.5 rounded bg-emerald-100/80 text-emerald-900 border border-emerald-200">志工文件: ${docDone}</span>
+        </div>
+      `;
+    }
+
+    function updateDivisionSubtotalBar() {
+      const bar = document.getElementById('divisionSubtotalBar');
+      const badge = document.getElementById('divisionCountBadge');
+      if (!state.tabs[state.activeTab]) return;
+      const allRegs = state.registrations.filter(r => r.tabId === state.activeTab);
+      const filledCount = allRegs.filter(r => !isRegEmpty(r)).length;
+      if (bar) bar.innerHTML = renderDivisionSubtotalContent(allRegs);
+      if (badge) badge.textContent = `${filledCount} 人`;
+    }
+
+    // ==================== 互動與資料操作函式 ====================
+    window.switchTab = function(tabId) {
+      flushPendingDebounces();
+      state.activeTab = tabId;
+      state.filters = { search: '', grade: 'all', docStatus: 'all' };
+      renderNavigation();
+      renderCurrentView();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.setNavRegionFilter = function(region) {
+      state.navRegionFilter = region;
+      ['all', 'taipei', 'newtaipei'].forEach(r => {
+        const btn = document.getElementById(`regionFilter-${r}`);
+        if (!btn) return;
+        btn.className = r === region
+          ? 'px-2.5 py-1 rounded-md font-medium transition bg-white text-slate-800 shadow-2xs'
+          : 'px-2.5 py-1 rounded-md font-medium transition text-slate-600 hover:text-slate-900';
+      });
+      renderNavigation();
+    };
+
+    window.updateRegFilter = function(key, val) {
+      state.filters[key] = val;
+      renderCurrentView();
+      if (key === 'search') {
+        const el = document.getElementById('regSearchInput');
+        if (el) { el.focus(); el.setSelectionRange(val.length, val.length); }
+      }
+      return;
+      state.filters[key] = val;
+      renderCurrentView();
+      if (key === 'search') {
+        const el = document.getElementById('regSearchInput');
+        if (el) {
+          el.focus();
+          el.setSelectionRange(val.length, val.length);
+        }
+      }
+    };
+
+    window.addCoordinatorRow = function(tabId, ev) {
+      lastLocalEditAt = Date.now();
+      if (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+      }
+      if (isCoordinatorsLocked()) {
+        showToast('管理者已鎖定負責人資料', 'warning');
+        return;
+      }
+      lastLocalEditAt = Date.now();
+      const tab = state.tabs[tabId];
+      if (!tab) return;
+      if (!Array.isArray(tab.coordinators)) tab.coordinators = [];
+      tab.coordinators.push({ hall: '', name: '', gender: '', phone: '' });
+      persistTabs(tabId);
+      renderCurrentView();
+      showToast('已新增一位負責人欄位');
+    };
+
+    window.removeCoordinatorRow = function(tabId, idx) {
+      lastLocalEditAt = Date.now();
+      if (isCoordinatorsLocked()) return;
+      lastLocalEditAt = Date.now();
+      const tab = state.tabs[tabId];
+      if (!tab || !Array.isArray(tab.coordinators) || tab.coordinators.length <= 3) return;
+      tab.coordinators.splice(idx, 1);
+      persistTabs(tabId);
+      renderCurrentView();
+      showToast('已移除該位負責人欄位');
+    };
+
+    window.updateCoordinator = function(tabId, idx, field, value) {
+      lastLocalEditAt = Date.now();
+      if (isCoordinatorsLocked()) return;
+      lastLocalEditAt = Date.now();
+      const tab = state.tabs[tabId];
+      if (!tab || !tab.coordinators[idx]) return;
+      tab.coordinators[idx][field] = value;
+
+      const key = `coord_${tabId}`;
+      if (debounceTimers[key]?.timer) clearTimeout(debounceTimers[key].timer);
+      const fn = () => {
+        delete debounceTimers[key];
+        persistTabs(tabId);
+      };
+      debounceTimers[key] = { timer: setTimeout(fn, 350), fn };
+    };
+
+    window.addRegistrationRow = function(tabId, ev) {
+      if (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+      }
+      if (isAddDeleteLocked()) {
+        showToast('管理者已鎖定新增功能', 'warning');
+        return;
+      }
+      const now = Date.now();
+      if (state.lastAddRowTs && (now - state.lastAddRowTs < 120)) return;
+      state.lastAddRowTs = now;
+
+      if (state.filters.search || state.filters.grade !== 'all' || state.filters.docStatus !== 'all') {
+        state.filters = { search: '', grade: 'all', docStatus: 'all' };
+      }
+
+      const newReg = {
+        id: `reg_${now}_${Math.random().toString(36).slice(2, 7)}`,
+        tabId,
+        createdAt: now,
+        hall: '',
+        name: '',
+        gender: '',
+        grade: '',
+        att_0102: false,
+        att_0213: false,
+        att_0219: false,
+        volunteerDoc: false,
+        note: ''
+      };
+
+      state.registrations.push(newReg);
+      saveLocalBackup();
+      renderNavigation();
+      renderCurrentView();
+      showToast('已新增一列空白兒童欄位');
+
+      requestAnimationFrame(() => {
+        const targetInput = window.innerWidth >= 768
+          ? document.querySelector(`[data-reg-hall="${newReg.id}"]`)
+          : document.querySelector(`[data-reg-hall-mobile="${newReg.id}"]`);
+        if (targetInput) targetInput.focus();
+      });
+    };
+
+    window.debouncedUpdateRegistration = function(regId, field, value) {
+      if (isFieldLocked(field)) return;
+      lastLocalEditAt = Date.now();
+      const reg = state.registrations.find(r => r.id === regId);
+      if (reg) {
+        reg[field] = value;
+        saveLocalBackup();
+        renderNavigation();
+        updateDivisionSubtotalBar();
+        if (state.sheetSyncMode) {
+          queueDivisionSync(reg.tabId, false);
+          return;
+        }
+      }
+      const key = `reg_${regId}_${field}`;
+      if (debounceTimers[key]?.timer) clearTimeout(debounceTimers[key].timer);
+      const fn = async () => {
+        delete debounceTimers[key];
+        await persistRegistrationUpdate(regId, { [field]: value }, false);
+      };
+      debounceTimers[key] = { timer: setTimeout(fn, 250), fn };
+    };
+
+    window.updateRegistrationField = async function(regId, field, value) {
+      if (isFieldLocked(field)) return;
+      lastLocalEditAt = Date.now();
+      const reg = state.registrations.find(r => r.id === regId);
+      if (reg) {
+        reg[field] = value;
+        saveLocalBackup();
+        renderNavigation();
+        updateDivisionSubtotalBar();
+      }
+      await persistRegistrationUpdate(regId, { [field]: value }, true);
+    };
+
+    window.requestDeleteRegistration = function(regId) {
+      if (isAddDeleteLocked()) {
+        showToast('管理者已鎖定刪除功能', 'warning');
+        return;
+      }
+      const reg = state.registrations.find(r => r.id === regId);
+      if (!reg) return;
+      state.pendingDeleteRegId = regId;
+      const textEl = document.getElementById('confirmDeleteText');
+      if (textEl) {
+        textEl.textContent = reg.name
+          ? `確定要刪除「${reg.name}」的報名資料嗎？刪除後將即時更新統計總表。`
+          : '確定要刪除此列空白資料嗎？';
+      }
+      document.getElementById('confirmDeleteModal').classList.remove('hidden');
+      const btn = document.getElementById('confirmDeleteBtn');
+      btn.onclick = async () => {
+        const targetId = state.pendingDeleteRegId;
+        closeModal('confirmDeleteModal');
+        if (targetId) {
+          await persistRegistrationDelete(targetId);
+          renderNavigation();
+          renderCurrentView();
+          showToast('已刪除該筆資料');
+        }
+      };
+    };
+
+    // ==================== 管理者功能操作 ====================
+    window.handleAdminButtonClick = function() {
+      if (state.isAdmin) {
+        openAdminPanelModal();
+      } else {
+        document.getElementById('adminLoginError').classList.add('hidden');
+        const inp = document.getElementById('adminPasswordInput');
+        inp.value = '';
+        document.getElementById('adminLoginModal').classList.remove('hidden');
+        setTimeout(() => inp.focus(), 50);
+      }
+    };
+
+    window.verifyAdminPassword = function() {
+      const inp = document.getElementById('adminPasswordInput');
+      const val = (inp.value || '').trim();
+      if (val === (state.settings.adminPassword || 'admin')) {
+        state.isAdmin = true;
+        closeModal('adminLoginModal');
+        updateAdminUIState();
+        renderCurrentView();
+        showToast('已進入管理者模式');
+      } else {
+        document.getElementById('adminLoginError').classList.remove('hidden');
+      }
+    };
+
+    window.exitAdminMode = function() {
+      state.isAdmin = false;
+      state.isEditingGuide = false;
+      state.summaryManualMode = false;
+      updateAdminUIState();
+      renderCurrentView();
+      showToast('已退出管理者模式');
+    };
+
+    function updateAdminUIState() {
+      const banner = document.getElementById('adminBanner');
+      const btn = document.getElementById('adminToggleBtn');
+      const btnText = document.getElementById('adminBtnText');
+      if (state.isAdmin) {
+        banner.classList.remove('hidden');
+        btn.className = 'px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1 border border-amber-400 bg-amber-50 text-amber-900 hover:bg-amber-100 shadow-2xs';
+        btnText.textContent = '權限設定';
+      } else {
+        banner.classList.add('hidden');
+        btn.className = 'px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1 border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 shadow-2xs';
+        btnText.textContent = '管理者';
+      }
+    }
+
+    window.openAdminPanelModal = function() {
+      if (!state.isAdmin) return;
+      const locks = state.settings.locks || DEFAULT_LOCKS;
+      document.getElementById('lockAddDeleteChk').checked = Boolean(locks.lockAddDelete);
+      document.getElementById('lockCoordinatorsChk').checked = Boolean(locks.lockCoordinators);
+      Object.keys(DEFAULT_LOCKS.fields).forEach(f => {
+        const el = document.getElementById(`lockField_${f}`);
+        if (el) el.checked = Boolean(locks.fields?.[f]);
+      });
+      document.getElementById('newAdminPasswordInput').value = '';
+      document.getElementById('adminPanelModal').classList.remove('hidden');
+    };
+
+    window.applyLockPreset = function(preset) {
+      if (preset === 'none') {
+        document.getElementById('lockAddDeleteChk').checked = false;
+        document.getElementById('lockCoordinatorsChk').checked = false;
+        Object.keys(DEFAULT_LOCKS.fields).forEach(f => {
+          document.getElementById(`lockField_${f}`).checked = false;
+        });
+      } else if (preset === 'profileOnly') {
+        document.getElementById('lockAddDeleteChk').checked = true;
+        document.getElementById('lockCoordinatorsChk').checked = true;
+        ['hall', 'name', 'gender', 'grade'].forEach(f => {
+          document.getElementById(`lockField_${f}`).checked = true;
+        });
+        ['att_0102', 'att_0213', 'att_0219', 'volunteerDoc', 'note'].forEach(f => {
+          document.getElementById(`lockField_${f}`).checked = false;
+        });
+      } else if (preset === 'all') {
+        document.getElementById('lockAddDeleteChk').checked = true;
+        document.getElementById('lockCoordinatorsChk').checked = true;
+        Object.keys(DEFAULT_LOCKS.fields).forEach(f => {
+          document.getElementById(`lockField_${f}`).checked = true;
+        });
+      }
+    };
+
+    window.saveAdminLockSettings = async function() {
+      if (!state.isAdmin) return;
+      const newLocks = {
+        lockAddDelete: document.getElementById('lockAddDeleteChk').checked,
+        lockCoordinators: document.getElementById('lockCoordinatorsChk').checked,
+        fields: {}
+      };
+      Object.keys(DEFAULT_LOCKS.fields).forEach(f => {
+        newLocks.fields[f] = document.getElementById(`lockField_${f}`).checked;
+      });
+      state.settings.locks = newLocks;
+
+      const newPwd = (document.getElementById('newAdminPasswordInput').value || '').trim();
+      if (newPwd) {
+        state.settings.adminPassword = newPwd;
+      }
+
+      closeModal('adminPanelModal');
+      await persistSettings();
+      renderCurrentView();
+      showToast(newPwd ? '已儲存鎖定設定並更新管理者密碼' : '已儲存並套用欄位鎖定設定');
+    };
+
+    window.toggleEditGuide = function() {
+      if (!state.isAdmin) return;
+      state.isEditingGuide = !state.isEditingGuide;
+      renderCurrentView();
+    };
+
+    window.saveGuideEdits = async function() {
+      if (!state.isAdmin) return;
+      state.guide = {
+        title: document.getElementById('guideTitleInput').value.trim() || DEFAULT_GUIDE.title,
+        subtitle: document.getElementById('guideSubtitleInput').value.trim(),
+        importantDates: document.getElementById('guideDatesInput').value,
+        volunteerNotice: document.getElementById('guideVolunteerInput').value,
+        reportingRules: document.getElementById('guideRulesInput').value,
+        extraAnnouncement: document.getElementById('guideExtraInput').value
+      };
+      state.isEditingGuide = false;
+      await persistGuide();
+      renderCurrentView();
+      showToast('已更新說明頁面內容');
+    };
+
+    window.toggleSummaryManualMode = function() {
+      if (!state.isAdmin) return;
+      state.summaryManualMode = !state.summaryManualMode;
+      renderCurrentView();
+    };
+
+    window.setSummaryZoom = function(delta) {
+      if (delta === 0) {
+        state.summaryZoom = 100;
+      } else {
+        state.summaryZoom = Math.min(120, Math.max(70, state.summaryZoom + delta));
+      }
+      renderCurrentView();
+    };
+
+    window.updateManualOverride = function(tabId, field, rawValue) {
+      lastLocalEditAt = Date.now();
+      if (!state.isAdmin) return;
+      lastLocalEditAt = Date.now();
+      const tab = state.tabs[tabId];
+      if (!tab) return;
+      if (!tab.manualOverride) {
+        tab.manualOverride = { enabled: false, total: null, att_0102: null, att_0213: null, att_0219: null, volunteerDoc: null };
+      }
+      tab.manualOverride[field] = rawValue === '' ? null : Math.max(0, parseInt(rawValue, 10) || 0);
+      const hasAny = ['total', 'att_0102', 'att_0213', 'att_0219', 'volunteerDoc'].some(
+        k => tab.manualOverride[k] !== null && tab.manualOverride[k] !== ''
+      );
+      tab.manualOverride.enabled = hasAny;
+
+      renderNavigation();
+      renderCurrentView();
+
+      const key = `ov_${tabId}`;
+      if (debounceTimers[key]?.timer) clearTimeout(debounceTimers[key].timer);
+      const fn = () => {
+        delete debounceTimers[key];
+        persistTabs(tabId);
+      };
+      debounceTimers[key] = { timer: setTimeout(fn, 350), fn };
+    };
+
+    window.updateSummaryNote = function(tabId, val) {
+      lastLocalEditAt = Date.now();
+      if (!state.isAdmin) return;
+      lastLocalEditAt = Date.now();
+      const tab = state.tabs[tabId];
+      if (!tab) return;
+      tab.summaryNote = val;
+      const key = `note_${tabId}`;
+      if (debounceTimers[key]?.timer) clearTimeout(debounceTimers[key].timer);
+      const fn = () => {
+        delete debounceTimers[key];
+        persistTabs(tabId);
+      };
+      debounceTimers[key] = { timer: setTimeout(fn, 350), fn };
+    };
+
+    window.openRenameTabModal = function(tabId) {
+      if (!state.isAdmin) return;
+      const tab = state.tabs[tabId];
+      if (!tab) return;
+      state.renamingTabId = tabId;
+      const inp = document.getElementById('renameTabInput');
+      inp.value = tab.name;
+      document.getElementById('renameTabModal').classList.remove('hidden');
+      setTimeout(() => inp.focus(), 50);
+    };
+
+    window.confirmRenameTab = async function() {
+      lastLocalEditAt = Date.now();
+      if (!state.isAdmin || !state.renamingTabId) return;
+      lastLocalEditAt = Date.now();
+      const newName = (document.getElementById('renameTabInput').value || '').trim();
+      if (!newName) {
+        showToast('分頁名稱不能為空', 'warning');
+        return;
+      }
+      const targetTabId = state.renamingTabId;
+      state.tabs[targetTabId].name = newName;
+      closeModal('renameTabModal');
+      await persistTabs(targetTabId);
+      renderNavigation();
+      renderCurrentView();
+      showToast('已更新分頁名稱');
+    };
+
+    window.closeModal = function(modalId) {
+      const el = document.getElementById(modalId);
+      if (el) el.classList.add('hidden');
+    };
+
+    // ==================== CSV 匯出功能 ====================
+    function downloadCsvFile(filename, rows) {
+      const csvContent = '\uFEFF' + rows.map(r =>
+        r.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')
+      ).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    window.exportSummaryCsv = function() {
+      const { taipei, newtaipei, grand } = computeRegionAndGrandStats();
+      const sorted = getSortedTabs();
+      const rows = [
+        ['分頁名稱', '區域', '報名人數', '1/2出席', '2/13出席', '2/19出席', '志工文件完成', '總表備註'],
+        ['全體總計', '全體', grand.total, grand.att_0102, grand.att_0213, grand.att_0219, grand.volunteerDoc, ''],
+        ['台北市小計', '台北市', taipei.total, taipei.att_0102, taipei.att_0213, taipei.att_0219, taipei.volunteerDoc, ''],
+        ...sorted.filter(t => t.region === 'taipei').map(t => {
+          const s = computeTabStats(t.id);
+          return [t.name, '台北市', s.total, s.att_0102, s.att_0213, s.att_0219, s.volunteerDoc, t.summaryNote || ''];
+        }),
+        ['新北市小計', '新北市', newtaipei.total, newtaipei.att_0102, newtaipei.att_0213, newtaipei.att_0219, newtaipei.volunteerDoc, ''],
+        ...sorted.filter(t => t.region === 'newtaipei').map(t => {
+          const s = computeTabStats(t.id);
+          return [t.name, '新北市', s.total, s.att_0102, s.att_0213, s.att_0219, s.volunteerDoc, t.summaryNote || ''];
+        })
+      ];
+      downloadCsvFile(`得少展覽報名統計總表_${new Date().toISOString().slice(0, 10)}.csv`, rows);
+      showToast('已匯出統計總表 CSV');
+    };
+
+    window.exportDivisionCsv = function(tabId) {
+      const tab = state.tabs[tabId];
+      const regs = state.registrations.filter(r => r.tabId === tabId && !isRegEmpty(r));
+      const rows = [
+        [`${tab.name} - 負責人`],
+        ['序號', '會所', '名字', '性別', '電話'],
+        ...(tab.coordinators || []).map((c, i) => [i + 1, c.hall, c.name, c.gender, c.phone]),
+        [],
+        [`${tab.name} - 兒童名單`],
+        ['序號', '會所', '名字', '性別', '年級', '1/2出席', '2/13出席', '2/19出席', '填寫完成志工文件', '備註'],
+        ...regs.map((r, i) => [
+          i + 1,
+          r.hall,
+          r.name,
+          r.gender,
+          r.grade,
+          r.att_0102 ? '是' : '否',
+          r.att_0213 ? '是' : '否',
+          r.att_0219 ? '是' : '否',
+          r.volunteerDoc ? '已完成' : '未完成',
+          r.note
+        ])
+      ];
+      downloadCsvFile(`得少展覽_${tab.name}_${new Date().toISOString().slice(0, 10)}.csv`, rows);
+      showToast(`已匯出「${tab.name}」名單 CSV`);
+    };
+
+    // 啟動應用程式
+    initApp();
+  </script>
+</body>
+</html>
